@@ -1,0 +1,50 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<title>Live Streaming TV</title>
+<script src="hls.js"></script>
+<script src="jquery.js"></script>
+</head>
+<body>
+<video controls autoplay id="video" width="100%"></video>
+<script>
+  if(Hls.isSupported()) {
+    var video = document.getElementById('video');
+    var hls = new Hls();
+    hls.loadSource('hls/playlist.m3u8');
+    hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED,function() {
+      video.play();
+    });
+  }
+</script>
+<script>
+function selectChannel() {
+  var ch = {'ch' : $('#channel_list [name=ch]:checked').val()};
+  $.ajax({
+    type: 'POST',
+    url: '/tv/cmd/',
+    cache: false,
+    data: ch,
+    success: function() {
+      setTimeout("location.reload()",10000);
+    }
+  });
+}
+</script>
+<form id="channel_list" name="channel_list">
+<input type="radio" id="1" name="ch" value="1"><label for="1">ＮＨＫ総合・東京</label>
+<input type="radio" id="2" name="ch" value="2"><label for="2">ＮＨＫＥテレ東京</label>
+<input type="radio" id="4" name="ch" value="4"><label for="4">日本テレビ</label>
+<input type="radio" id="5" name="ch" value="5"><label for="5">テレビ朝日</label>
+<input type="radio" id="6" name="ch" value="6"><label for="6">ＴＢＳ</label>
+<input type="radio" id="7" name="ch" value="7"><label for="7">テレビ東京</label>
+<input type="radio" id="8" name="ch" value="8"><label for="8">フジテレビジョン</label>
+<input type="radio" id="9" name="ch" value="9"><label for="9">ＴＯＫＹＯ　ＭＸ</label>
+<input type="radio" id="12" name="ch" value="12"><label for="12">放送大学</label>
+<input type="button" id="channel_select" onclick="selectChannel()" value="SELECT">
+</form>
+<br><br>
+<iframe src="http://tv.so-net.ne.jp/chart/23.action" width="100%" height="500px"></iframe>
+</body>
+</html>

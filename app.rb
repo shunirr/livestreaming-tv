@@ -48,9 +48,9 @@ def start_ffmpeg
                    '-map', '0:0', '-map', '0:1',
                    '-acodec', 'libvo_aacenc', '-ar', '44100', '-ab', '128k', '-ac', '2',
                    '-vcodec', 'libx264', '-s', '1280x720', '-aspect', '16:9', '-vb', '2m',
-		   '-r', TS_FPS.to_s,
+                   '-r', TS_FPS.to_s,
                    '-g', "#{TS_FPS * HLS_SEGMENT_TIME}",
-		   '-force_key_frames', "expr:(t/#{HLS_SEGMENT_TIME})",
+                   '-force_key_frames', "expr:(t/#{HLS_SEGMENT_TIME})",
                    '-f', 'segment',
                    '-segment_format', 'mpegts',
                    '-segment_time', HLS_SEGMENT_TIME.to_s,
@@ -59,14 +59,13 @@ def start_ffmpeg
                    '-segment_wrap', '50',
                    '-segment_list_size', '5',
                    '-break_non_keyframes', '1',
-                   "#{WWW_PATH}\\stream%d.ts") do |i, o, e, w|
-      end
+                   "#{WWW_PATH}\\stream%d.ts") {|i, o, e, w| }
     end
   end
 end
 
 def delete_all
-  m3u8 = "#{WWW_PATH}\\playlist.m3u8"
+  m3u8 = "#{WWW_PATH}\\#{M3U8_FILENAME}"
   File.delete m3u8 if File.exist? m3u8
   Dir.glob("#{WWW_PATH}\\*.ts".gsub('\\', '//')).each do |f|
     File.delete f

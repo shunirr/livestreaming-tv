@@ -119,23 +119,23 @@ module LiveStreamingTV
 
   class Controller < Sinatra::Base
     configure do
-      @rectest = RecTest.new
-      @ffmpeg = FFmpeg.new
-      @rectest.start
-      @ffmpeg.start
+      set :rectest, RecTest.new
+      set :ffmpeg, FFmpeg.new
+      settings.rectest.start
+      settings.ffmpeg.start
     end
 
     get '/' do
-      @rectest.start unless @rectest.running? 
-      @ffmpeg.start unless @ffmpeg.running? 
+      settings.rectest.start unless settings.rectest.running?
+      settings.ffmpeg.start unless settings.ffmpeg.running?
       File.read(File.join('public', 'index.html'))
     end
 
     post '/select_channel' do
       ch = params['ch'].to_i
       puts "select ch = #{ch}"
-      @rectest.restart ch
-      @ffmpeg.restart
+      settings.rectest.restart ch
+      settings.ffmpeg.restart
       200
     end
   end

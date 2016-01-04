@@ -3,11 +3,9 @@
 require 'open3'
 require 'sinatra'
 
-RECTEST_COMMAND = 'RecTest.exe'
-RECTEST_PATH    = 'C:\\tv\\TVTest'
+RECTEST_PATH    = 'C:\\tv\\TVTest\\RecTest.exe'
 RECTEST_PORT    = 3456
-FFMPEG_COMMAND  = 'ffmpeg.exe'
-FFMPEG_PATH     = 'C:\\tv\\ffmpeg\\bin'
+FFMPEG_PATH     = 'C:\\tv\\ffmpeg\\bin\\ffmpeg.exe'
 WWW_PATH        = 'public\\hls'
 M3U8_FILENAME   = 'playlist.m3u8'
 
@@ -31,11 +29,11 @@ def start_rectest
   puts "start_rectest ch = #{$channel_id}"
   Thread.start do 
     if $channel_id.nil?
-      Open3.popen3("#{RECTEST_PATH}\\#{RECTEST_COMMAND}", '/udp', '/udpport', RECTEST_PORT.to_s) do |i, o, e, w|
+      Open3.popen3(RECTEST_PATH, '/udp', '/udpport', RECTEST_PORT.to_s) do |i, o, e, w|
         $rectest_pid = w.pid
       end
     else
-      Open3.popen3("#{RECTEST_PATH}\\#{RECTEST_COMMAND}", '/rch', $channel_id.to_s, '/udp', '/udpport', RECTEST_PORT.to_s) do |i, o, e, w|
+      Open3.popen3(RECTEST_PATH, '/rch', $channel_id.to_s, '/udp', '/udpport', RECTEST_PORT.to_s) do |i, o, e, w|
         $rectest_pid = w.pid
       end
     end
@@ -50,7 +48,7 @@ def start_ffmpeg
       Dir.glob("#{WWW_PATH}\\*.ts".gsub('\\', '//')).each do |f|
         File.delete f
       end
-      Open3.popen3("#{FFMPEG_PATH}\\#{FFMPEG_COMMAND}",
+      Open3.popen3(FFMPEG_PATH,
                    '-i', "udp://127.0.0.1:#{RECTEST_PORT}?pkt_size=262144^&fifo_size=1000000^&overrun_nonfatal=1",
                    '-f', 'mpegts',
                    '-threads', 'auto',
@@ -68,10 +66,10 @@ def start_ffmpeg
                    '-segment_wrap', '50',
                    '-segment_list_size', '5',
                    '-break_non_keyframes', '1',
-                   "#{WWW_PATH}\\stream%d.ts") {|i, o, e, w|
-		     puts "ffmpeg is running (pid = #{w.pid})"
-		     $ffmpeg_pid = w.pid
-		   }
+                   "#{WWW_PATH}\\stream%d.ts") do |i, o, e, w|
+                     puts "ffmpeg is running (pid = #{w.pid})"
+                     $ffmpeg_pid = w.pid
+                   end
       puts "ffmpeg is dead"
       $ffmpeg_pid = 0
     end

@@ -3,5 +3,5 @@
 
 require './app'
 
-use Rack::Static, urls: ['/hls', '/js'], root: 'public'
+use Rack::Static, urls: ['/js'], root: 'public'
 run LiveStreamingTV::Controller

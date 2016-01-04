@@ -8,7 +8,7 @@ require 'm3u8'
 RECTEST_PATH    = 'C:/tv/TVTest/RecTest.exe'
 RECTEST_PORT    = 3456
 FFMPEG_PATH     = 'C:/tv/ffmpeg/bin/ffmpeg.exe'
-HLS_PATH        = "public/hls"
+HLS_PATH        = 'public/hls'
 M3U8_FILENAME   = 'playlist.m3u8'
 
 TS_FPS           = 24
@@ -137,21 +137,33 @@ module LiveStreamingTV
       File.read(File.join('public', 'index.html'))
     end
 
-    get '/playlist.m3u8' do
+    get '/hls/playlist.m3u8' do
       playlists = []
-      Dir.glob("#{HLS_PATH}/*.m3u8") do |file|
-        playlists << M3u8::Playlist.read(open(file).read)
+
+      Dir.glob("#{HLS_PATH}/*.m3u8").sort do |a, b|
+        File.basename(a) <=> File.basename(b)
+      end.each do |file|
+        time = File.basename(file).match(/^\d+/)[0].to_i
+        File.open(file, 'r') do |f|
+          playlists << {:time => time, :m3u8 => M3u8::Playlist.read(f.read)}
+	end
       end
+
       if playlists.size == 0
         404
       elsif playlists.size == 1
-        playlists[0].to_s
+	playlists[0][:m3u8].sequence = playlists[0][:m3u8].sequence + playlists[0][:time]
+	playlists[0][:m3u8].to_s.gsub('#EXT-X-ENDLIST', '')
       else
-        playlists[1].items.each do |item|
-          playlists[0].items << item
-        end
-        playlists[0].to_s
+        playlists[0][:m3u8].items.concat(playlists[1][:m3u8].items)
+        playlists[0][:m3u8].items.shift(playlists[1][:m3u8].items.size)
+	playlists[0][:m3u8].sequence = playlists[1][:m3u8].sequence + playlists[1][:time] + playlists[1][:m3u8].items.size
+	playlists[0][:m3u8].to_s.gsub('#EXT-X-ENDLIST', '')
       end
+    end
+
+    get '/hls/*.ts' do |filename|
+      File.read(File.join('public', "#{filename}.ts"))
     end
 
     post '/select_channel' do

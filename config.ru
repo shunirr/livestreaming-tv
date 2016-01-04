@@ -4,4 +4,4 @@
 require './app'
 
 use Rack::Static, urls: ['/hls', '/js'], root: 'public'
-run Sinatra::Application
+run LiveStreamingTV::Controller

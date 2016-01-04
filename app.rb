@@ -23,7 +23,10 @@ class RecTest
   end
 
   def stop
-    Process.kill('KILL', @pid) if @pid > 0
+    if @pid > 0
+      Process.kill('KILL', @pid)
+      @pid = 0
+    end
   end
   
   def start(ch = 0)
@@ -56,7 +59,10 @@ class Ffmpeg
   end
 
   def stop
-    Process.kill('KILL', @pid) if @pid > 0
+    if @pid > 0
+      Process.kill('KILL', @pid)
+      @pid = 0
+    end
   end
   
   def start
@@ -88,6 +94,7 @@ class Ffmpeg
                    "#{WWW_PATH}/stream%d.ts") do |i, o, e, w|
                      puts "ffmpeg is running (pid = #{w.pid})"
                      @pid = w.pid
+		     e.each {|l| puts l}
                    end
       puts "ffmpeg is dead"
       @pid = 0
@@ -106,7 +113,6 @@ end
 rectest = RecTest.new
 ffmpeg = Ffmpeg.new
 
-ffmpeg.delete_temp_files
 rectest.start
 ffmpeg.start
 

@@ -1,12 +1,14 @@
 # Windows 
 
 require 'open3'
+require 'time'
 require 'sinatra'
+require 'm3u8'
 
 RECTEST_PATH    = 'C:/tv/TVTest/RecTest.exe'
 RECTEST_PORT    = 3456
 FFMPEG_PATH     = 'C:/tv/ffmpeg/bin/ffmpeg.exe'
-WWW_PATH        = 'public/hls'
+HLS_PATH        = "public/hls"
 M3U8_FILENAME   = 'playlist.m3u8'
 
 TS_FPS           = 24
@@ -76,6 +78,7 @@ module LiveStreamingTV
       Thread.start do
         puts "start ffmpeg"
         delete_temp_files
+        now = Time.now.to_i
         Open3.popen3(FFMPEG_PATH,
                      '-i', "udp://127.0.0.1:#{RECTEST_PORT}?pkt_size=262144^&fifo_size=1000000^&overrun_nonfatal=1",
                      '-f', 'mpegts',
@@ -89,12 +92,12 @@ module LiveStreamingTV
                      '-f', 'segment',
                      '-segment_format', 'mpegts',
                      '-segment_time', HLS_SEGMENT_TIME.to_s,
-                     '-segment_list', "#{WWW_PATH}/#{M3U8_FILENAME}",
+                     '-segment_list', "#{HLS_PATH}/#{now}_#{M3U8_FILENAME}",
                      '-segment_list_flags', 'live',
                      '-segment_wrap', '50',
                      '-segment_list_size', '5',
                      '-break_non_keyframes', '1',
-                     "#{WWW_PATH}/stream%d.ts") do |i, o, e, w|
+                     "#{HLS_PATH}/#{now}_stream%d.ts") do |i, o, e, w|
                        puts "ffmpeg is running (pid = #{w.pid})"
                        @pid = w.pid
                        e.each {|l| puts l}
@@ -105,10 +108,15 @@ module LiveStreamingTV
     end
 
     def delete_temp_files
-      m3u8 = "#{WWW_PATH}/#{M3U8_FILENAME}"
-      File.delete m3u8 if File.exist? m3u8
-      Dir.glob("#{WWW_PATH}/*.ts").each do |f|
-        File.delete f
+      playlists = Dir.glob("#{HLS_PATH}/*.m3u8").sort do |a, b|
+        File.basename(a) <=> File.basename(b)
+      end
+      if playlists.size > 1
+        prefix = File.basename(playlists[0]).match(/^\d+/)[0]
+        File.delete playlists[0]
+        Dir.glob("#{HLS_PATH}/#{prefix}_*.ts").each do |f|
+          File.delete f
+        end
       end
     end
 
@@ -126,9 +134,24 @@ module LiveStreamingTV
     end
 
     get '/' do
-      settings.rectest.start unless settings.rectest.running?
-      settings.ffmpeg.start unless settings.ffmpeg.running?
       File.read(File.join('public', 'index.html'))
+    end
+
+    get '/playlist.m3u8' do
+      playlists = []
+      Dir.glob("#{HLS_PATH}/*.m3u8") do |file|
+        playlists << M3u8::Playlist.read(open(file).read)
+      end
+      if playlists.size == 0
+        404
+      elsif playlists.size == 1
+        playlists[0].to_s
+      else
+        playlists[1].items.each do |item|
+          playlists[0].items << item
+        end
+        playlists[0].to_s
+      end
     end
 
     post '/select_channel' do

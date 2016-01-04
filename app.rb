@@ -3,10 +3,10 @@
 require 'open3'
 require 'sinatra'
 
-RECTEST_PATH    = 'C:\\tv\\TVTest\\RecTest.exe'
+RECTEST_PATH    = 'C:/tv/TVTest/RecTest.exe'
 RECTEST_PORT    = 3456
-FFMPEG_PATH     = 'C:\\tv\\ffmpeg\\bin\\ffmpeg.exe'
-WWW_PATH        = 'public\\hls'
+FFMPEG_PATH     = 'C:/tv/ffmpeg/bin/ffmpeg.exe'
+WWW_PATH        = 'public/hls'
 M3U8_FILENAME   = 'playlist.m3u8'
 
 TS_FPS           = 24
@@ -45,7 +45,7 @@ def start_ffmpeg
   puts "start_ffmpeg"
   $ffmpeg_thread = Thread.new do
     loop do
-      Dir.glob("#{WWW_PATH}\\*.ts".gsub('\\', '//')).each do |f|
+      Dir.glob("#{WWW_PATH}/*.ts").each do |f|
         File.delete f
       end
       Open3.popen3(FFMPEG_PATH,
@@ -61,12 +61,12 @@ def start_ffmpeg
                    '-f', 'segment',
                    '-segment_format', 'mpegts',
                    '-segment_time', HLS_SEGMENT_TIME.to_s,
-                   '-segment_list', "#{WWW_PATH}\\#{M3U8_FILENAME}",
+                   '-segment_list', "#{WWW_PATH}/#{M3U8_FILENAME}",
                    '-segment_list_flags', 'live',
                    '-segment_wrap', '50',
                    '-segment_list_size', '5',
                    '-break_non_keyframes', '1',
-                   "#{WWW_PATH}\\stream%d.ts") do |i, o, e, w|
+                   "#{WWW_PATH}/stream%d.ts") do |i, o, e, w|
                      puts "ffmpeg is running (pid = #{w.pid})"
                      $ffmpeg_pid = w.pid
                    end
@@ -77,9 +77,9 @@ def start_ffmpeg
 end
 
 def delete_all
-  m3u8 = "#{WWW_PATH}\\#{M3U8_FILENAME}"
+  m3u8 = "#{WWW_PATH}/#{M3U8_FILENAME}"
   File.delete m3u8 if File.exist? m3u8
-  Dir.glob("#{WWW_PATH}\\*.ts".gsub('\\', '//')).each do |f|
+  Dir.glob("#{WWW_PATH}/*.ts").each do |f|
     File.delete f
   end
 end

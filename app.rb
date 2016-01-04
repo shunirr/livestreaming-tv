@@ -16,21 +16,30 @@ HLS_SEGMENT_TIME = 2
 
 $channel_id = nil
 $ffmpeg_thread = nil
+$ffmpeg_pid = 0
+$rectest_pid = 0
 
 def stop_rectest
-  system('TASKKILL', '/im', RECTEST_COMMAND, '/F', '/T')
+  Process.kill('KILL', $rectest_pid) if $rectest_pid > 0
 end
 
 def stop_ffmpeg
-  system('TASKKILL', '/im', FFMPEG_COMMAND, '/F', '/T')
+  Process.kill('KILL', $ffmpeg_pid) if $ffmpeg_pid > 0
 end
 
 def start_rectest
   puts "start_rectest ch = #{$channel_id}"
-  if $channel_id.nil?
-    system('start', "#{RECTEST_PATH}\\#{RECTEST_COMMAND}", '/udp', '/udpport', RECTEST_PORT.to_s)
-  else
-    system('start', "#{RECTEST_PATH}\\#{RECTEST_COMMAND}", '/rch', $channel_id.to_s, '/udp', '/udpport', RECTEST_PORT.to_s)
+  Thread.start do 
+    if $channel_id.nil?
+      Open3.popen3("#{RECTEST_PATH}\\#{RECTEST_COMMAND}", '/udp', '/udpport', RECTEST_PORT.to_s) do |i, o, e, w|
+        $rectest_pid = w.pid
+      end
+    else
+      Open3.popen3("#{RECTEST_PATH}\\#{RECTEST_COMMAND}", '/rch', $channel_id.to_s, '/udp', '/udpport', RECTEST_PORT.to_s) do |i, o, e, w|
+        $rectest_pid = w.pid
+      end
+    end
+    $rectest_pid = 0
   end
 end
 
@@ -59,7 +68,12 @@ def start_ffmpeg
                    '-segment_wrap', '50',
                    '-segment_list_size', '5',
                    '-break_non_keyframes', '1',
-                   "#{WWW_PATH}\\stream%d.ts") {|i, o, e, w| }
+                   "#{WWW_PATH}\\stream%d.ts") {|i, o, e, w|
+		     puts "ffmpeg is running (pid = #{w.pid})"
+		     $ffmpeg_pid = w.pid
+		   }
+      puts "ffmpeg is dead"
+      $ffmpeg_pid = 0
     end
   end
 end

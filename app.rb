@@ -8,7 +8,7 @@ RECTEST_PATH    = 'C:\\tv\\TVTest'
 RECTEST_PORT    = 3456
 FFMPEG_COMMAND  = 'ffmpeg.exe'
 FFMPEG_PATH     = 'C:\\tv\\ffmpeg\\bin'
-WWW_PATH        = 'C:\\nginx\\html\\tv\\hls'
+WWW_PATH        = 'public\\hls'
 M3U8_FILENAME   = 'playlist.m3u8'
 
 TS_FPS           = 24
@@ -86,7 +86,11 @@ end
 delete_all
 restart_all
 
-post '/tv/cmd/' do
+get '/' do
+  File.read(File.join('public', 'index.html'))
+end
+
+post '/select_channel' do
   begin
     ch = params['ch'].to_i
     if $channel_id != ch

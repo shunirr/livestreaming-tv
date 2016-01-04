@@ -2,8 +2,8 @@
 <html>
 <head>
 <title>Live Streaming TV</title>
-<script src="hls.js"></script>
-<script src="jquery.js"></script>
+<script src="js/hls.js"></script>
+<script src="js/jquery.js"></script>
 </head>
 <body>
 <video controls autoplay id="video" width="100%"></video>
@@ -23,7 +23,7 @@ function selectChannel() {
   var ch = {'ch' : $('#channel_list [name=ch]:checked').val()};
   $.ajax({
     type: 'POST',
-    url: '/tv/cmd/',
+    url: 'select_channel',
     cache: false,
     data: ch,
     success: function() {

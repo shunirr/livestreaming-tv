@@ -25,10 +25,7 @@ function selectChannel() {
     type: 'POST',
     url: 'select_channel',
     cache: false,
-    data: ch,
-    success: function() {
-      setTimeout("location.reload()",10000);
-    }
+    data: ch
   });
 }
 </script>

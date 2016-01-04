@@ -12,110 +12,113 @@ M3U8_FILENAME   = 'playlist.m3u8'
 TS_FPS           = 24
 HLS_SEGMENT_TIME = 2
 
-$channel_id = nil
-$ffmpeg_pid = 0
-$rectest_pid = 0
+class RecTest
+  def initialize
+    @pid = 0
+  end
 
-def stop_rectest
-  Process.kill('KILL', $rectest_pid) if $rectest_pid > 0
-end
+  def restart(ch = 0)
+    stop
+    start ch
+  end
 
-def stop_ffmpeg
-  Process.kill('KILL', $ffmpeg_pid) if $ffmpeg_pid > 0
-end
-
-def start_rectest
-  return if $rectest_pid > 0
-
-  Thread.start do 
-    puts "start rectest (ch = #{$channel_id})"
-    if $channel_id.nil?
-      Open3.popen3(RECTEST_PATH, '/udp', '/udpport', RECTEST_PORT.to_s) do |i, o, e, w|
-        $rectest_pid = w.pid
+  def stop
+    Process.kill('KILL', @pid) if @pid > 0
+  end
+  
+  def start(ch = 0)
+    return if @pid > 0
+  
+    Thread.start do 
+      puts "start rectest (ch = #{ch})"
+      if ch > 0
+        Open3.popen3(RECTEST_PATH, '/rch', ch.to_s, '/udp', '/udpport', RECTEST_PORT.to_s) do |i, o, e, w|
+          @pid = w.pid
+        end
+      else
+        Open3.popen3(RECTEST_PATH, '/udp', '/udpport', RECTEST_PORT.to_s) do |i, o, e, w|
+          @pid = w.pid
+        end
       end
-    else
-      Open3.popen3(RECTEST_PATH, '/rch', $channel_id.to_s, '/udp', '/udpport', RECTEST_PORT.to_s) do |i, o, e, w|
-        $rectest_pid = w.pid
-      end
+      @pid = 0
     end
-    $rectest_pid = 0
   end
 end
 
-def start_ffmpeg
-  return if $ffmpeg_pid > 0
+class Ffmpeg
+  def initialize
+    @pid = 0
+  end
 
-  Thread.start do
-    puts "start ffmpeg"
+  def restart
+    stop
+    start
+  end
+
+  def stop
+    Process.kill('KILL', @pid) if @pid > 0
+  end
+  
+  def start
+    return if @pid > 0
+  
+    Thread.start do
+      puts "start ffmpeg"
+
+      delete_temp_files
+
+      Open3.popen3(FFMPEG_PATH,
+                   '-i', "udp://127.0.0.1:#{RECTEST_PORT}?pkt_size=262144^&fifo_size=1000000^&overrun_nonfatal=1",
+                   '-f', 'mpegts',
+                   '-threads', 'auto',
+                   '-map', '0:0', '-map', '0:1',
+                   '-acodec', 'libvo_aacenc', '-ar', '44100', '-ab', '128k', '-ac', '2',
+                   '-vcodec', 'libx264', '-s', '1280x720', '-aspect', '16:9', '-vb', '2m',
+                   '-r', TS_FPS.to_s,
+                   '-g', "#{TS_FPS * HLS_SEGMENT_TIME}",
+                   '-force_key_frames', "expr:(t/#{HLS_SEGMENT_TIME})",
+                   '-f', 'segment',
+                   '-segment_format', 'mpegts',
+                   '-segment_time', HLS_SEGMENT_TIME.to_s,
+                   '-segment_list', "#{WWW_PATH}/#{M3U8_FILENAME}",
+                   '-segment_list_flags', 'live',
+                   '-segment_wrap', '50',
+                   '-segment_list_size', '5',
+                   '-break_non_keyframes', '1',
+                   "#{WWW_PATH}/stream%d.ts") do |i, o, e, w|
+                     puts "ffmpeg is running (pid = #{w.pid})"
+                     @pid = w.pid
+                   end
+      puts "ffmpeg is dead"
+      @pid = 0
+    end
+  end
+
+  def delete_temp_files
+    m3u8 = "#{WWW_PATH}/#{M3U8_FILENAME}"
+    File.delete m3u8 if File.exist? m3u8
     Dir.glob("#{WWW_PATH}/*.ts").each do |f|
       File.delete f
     end
-    Open3.popen3(FFMPEG_PATH,
-                 '-i', "udp://127.0.0.1:#{RECTEST_PORT}?pkt_size=262144^&fifo_size=1000000^&overrun_nonfatal=1",
-                 '-f', 'mpegts',
-                 '-threads', 'auto',
-                 '-map', '0:0', '-map', '0:1',
-                 '-acodec', 'libvo_aacenc', '-ar', '44100', '-ab', '128k', '-ac', '2',
-                 '-vcodec', 'libx264', '-s', '1280x720', '-aspect', '16:9', '-vb', '2m',
-                 '-r', TS_FPS.to_s,
-                 '-g', "#{TS_FPS * HLS_SEGMENT_TIME}",
-                 '-force_key_frames', "expr:(t/#{HLS_SEGMENT_TIME})",
-                 '-f', 'segment',
-                 '-segment_format', 'mpegts',
-                 '-segment_time', HLS_SEGMENT_TIME.to_s,
-                 '-segment_list', "#{WWW_PATH}/#{M3U8_FILENAME}",
-                 '-segment_list_flags', 'live',
-                 '-segment_wrap', '50',
-                 '-segment_list_size', '5',
-                 '-break_non_keyframes', '1',
-                 "#{WWW_PATH}/stream%d.ts") do |i, o, e, w|
-                   puts "ffmpeg is running (pid = #{w.pid})"
-                   $ffmpeg_pid = w.pid
-                 end
-    puts "ffmpeg is dead"
-    $ffmpeg_pid = 0
   end
 end
 
-def delete_all
-  m3u8 = "#{WWW_PATH}/#{M3U8_FILENAME}"
-  File.delete m3u8 if File.exist? m3u8
-  Dir.glob("#{WWW_PATH}/*.ts").each do |f|
-    File.delete f
-  end
-end
+rectest = RecTest.new
+ffmpeg = Ffmpeg.new
 
-def restart_all
-  stop_rectest
-  stop_ffmpeg
-  start_rectest
-  start_ffmpeg
-end
-
-### 
-
-delete_all
-restart_all
-
-Signal.trap("INT") do |signo|
-  stop_ffmpeg
-  stop_rectest
-end
+ffmpeg.delete_temp_files
+rectest.start
+ffmpeg.start
 
 get '/' do
   File.read(File.join('public', 'index.html'))
 end
 
 post '/select_channel' do
-  begin
-    ch = params['ch'].to_i
-    if $channel_id != ch
-      puts "select ch = #{ch}"
-      $channel_id = ch
-      restart_all
-    end
-  rescue
-  end
+  ch = params['ch'].to_i
+  puts "select ch = #{ch}"
+  rectest.restart ch
+  ffmpeg.restart
   200
 end
 

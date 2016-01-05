@@ -4,6 +4,8 @@ require 'open3'
 require 'time'
 require 'sinatra'
 require 'm3u8'
+require 'twitter'
+require 'tempfile'
 
 RECTEST_PATH    = 'C:/tv/TVTest/RecTest.exe'
 RECTEST_PORT    = 3456
@@ -137,6 +139,14 @@ module LiveStreamingTV
       set :sequence, Hash.new
       settings.rectest.start
       settings.ffmpeg.start
+
+      client = Twitter::REST::Client.new do |config|
+        config.consumer_key        = ENV['CONSUMER_KEY']
+        config.consumer_secret     = ENV['CONSUMER_SECRET']
+        config.access_token        = ENV['ACCESS_TOKEN']
+        config.access_token_secret = ENV['ACCESS_TOKEN_SECRET']
+      end
+      set :twitter_client, client
     end
 
     get '/' do
@@ -191,15 +201,22 @@ module LiveStreamingTV
     end
 
     post '/select_channel' do
-      ch = params['ch'].to_i
+      ch = params[:ch].to_i
       puts "select ch = #{ch}"
       settings.rectest.restart ch
       settings.ffmpeg.restart
       200
     end
 
-    # post '/tweet' do
-    #   img = param['url'].sub(/data:image\/png;base64,/, '').unpack('m').first
-    # end
+    post '/tweet' do
+      img = params[:url].sub(/^data:image\/png;base64,/, '').unpack('m').first
+      Tempfile.create("#{rand(256**16).to_s(16)}.png") do |png|
+        open(png, 'wb') {|f| f.write img }
+	open(png) do |f|
+          settings.twitter_client.update_with_media(' ', f)
+	end
+      end
+      201
+    end
   end
 end

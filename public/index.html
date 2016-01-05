@@ -10,10 +10,7 @@
       type: 'POST',
       url: 'select_channel',
       cache: false,
-      data: { ch: $('#channel_list [name=ch]:checked').val() },
-      success: function() {
-        setTimeout('location.reload()', 10 * 1000);
-      }
+      data: { ch: $('#channel_list [name=ch]:checked').val() }
     });
   }
   function capture() {
@@ -48,7 +45,7 @@
   if (Hls.isSupported()) {
     var video = document.getElementById('video');
     var hls = new Hls();
-    hls.loadSource('hls/playlist.m3u8');
+    hls.loadSource('hls/stream.m3u8');
     hls.attachMedia(video);
     hls.on(Hls.Events.MANIFEST_PARSED, function() {
       video.play();

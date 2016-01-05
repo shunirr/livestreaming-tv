@@ -9,6 +9,7 @@ LiveStreaming TV
 * PT3
 * Ruby
 * nginx
+    * nginx-rtmp-module
 
 ## License
 

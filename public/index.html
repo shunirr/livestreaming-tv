@@ -27,7 +27,7 @@
       type: 'POST',
       url: 'tweet',
       cache: false,
-      data: { url: ctx.toDataURL() },
+      data: { url: c.toDataURL() },
       success: function() {
         c.remove();
       }

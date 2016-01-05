@@ -10,7 +10,10 @@
       type: 'POST',
       url: 'select_channel',
       cache: false,
-      data: { ch: $('#channel_list [name=ch]:checked').val() }
+      data: { ch: $('#channel_list [name=ch]:checked').val() },
+      success: function() {
+        setTimeout('location.reload()', 10 * 1000);
+      }
     });
   }
   function capture() {

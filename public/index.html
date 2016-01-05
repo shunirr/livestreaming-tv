@@ -4,30 +4,53 @@
 <title>Live Streaming TV</title>
 <script src="js/hls.js"></script>
 <script src="js/jquery.js"></script>
+<script>
+  function selectChannel() {
+    $.ajax({
+      type: 'POST',
+      url: 'select_channel',
+      cache: false,
+      data: { ch: $('#channel_list [name=ch]:checked').val() }
+    });
+  }
+  function capture() {
+    var v = document.getElementById('video');
+    var c = document.createElement('canvas');
+    var ctx = c.getContext('2d');
+    c.width = v.videoWidth;
+    c.height = v.videoHeight;
+    ctx.drawImage(v, 0, 0);
+    $.ajax({
+      type: 'POST',
+      url: 'tweet',
+      cache: false,
+      data: { url: ctx.toDataURL() },
+      success: function() {
+        c.remove();
+      }
+    });
+  }
+  function bind() {
+    $(window).keyup(function(e) {
+      if (e.keyCode == 84) {
+        this.capture();
+      }
+    });
+  }
+</script>
 </head>
-<body>
+<body onload="bind()">
 <video controls autoplay id="video" width="100%"></video>
 <script>
-  if(Hls.isSupported()) {
+  if (Hls.isSupported()) {
     var video = document.getElementById('video');
     var hls = new Hls();
     hls.loadSource('hls/playlist.m3u8');
     hls.attachMedia(video);
-    hls.on(Hls.Events.MANIFEST_PARSED,function() {
+    hls.on(Hls.Events.MANIFEST_PARSED, function() {
       video.play();
     });
   }
-</script>
-<script>
-function selectChannel() {
-  var ch = {'ch' : $('#channel_list [name=ch]:checked').val()};
-  $.ajax({
-    type: 'POST',
-    url: 'select_channel',
-    cache: false,
-    data: ch
-  });
-}
 </script>
 <form id="channel_list" name="channel_list">
 <input type="radio" id="1" name="ch" value="1"><label for="1">ＮＨＫ総合・東京</label>

@@ -173,5 +173,9 @@ module LiveStreamingTV
       settings.ffmpeg.restart
       200
     end
+
+    # post '/tweet' do
+    #   img = param['url'].sub(/data:image\/png;base64,/, '').unpack('m').first
+    # end
   end
 end

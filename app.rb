@@ -80,7 +80,6 @@ module LiveStreamingTV
       Thread.start do
         loop {
           puts "start ffmpeg"
-          delete_temp_files
           now = Time.now.to_i
           Open3.popen3(FFMPEG_PATH,
                        '-i', "udp://127.0.0.1:#{RECTEST_PORT}?pkt_size=262144^&fifo_size=1000000^&overrun_nonfatal=1",

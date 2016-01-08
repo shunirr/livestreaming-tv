@@ -3,3 +3,4 @@ vendor/bundle
 public/hls/*.m3u8
 public/hls/*.ts
 run.bat
+run.sh

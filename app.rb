@@ -82,14 +82,17 @@ module LiveStreamingTV
           puts "start ffmpeg"
           now = Time.now.to_i
           Open3.popen3(FFMPEG_PATH,
+                       # '-fflags', '+discardcorrupt',
                        '-i', "udp://127.0.0.1:#{RECTEST_PORT}?pkt_size=262144^&fifo_size=1000000^&overrun_nonfatal=1",
                        '-threads', 'auto',
                        '-map', '0:0', '-map', '0:1',
-                       '-acodec', 'libvo_aacenc', '-ar', '44100', '-ab', '128k', '-ac', '2',
-                       '-vcodec', 'libx264', '-s', '1280x720', '-aspect', '16:9', '-vb', '1m',
+                       '-acodec', 'libfdk_aac', '-ar', '44100', '-ab', '128k', '-ac', '2',
+                       # '-vcodec', 'libx264', '-s', '1280x720', '-aspect', '16:9', '-vb', '1m',
+                       '-vcodec', 'libx264', '-s', '640x360', '-aspect', '16:9', '-vb', '500k',
+                       '-vsync', '1',
                        '-r', TS_FPS.to_s,
                        '-g', "#{TS_FPS}",
-                       '-force_key_frames', "expr:(t/#{HLS_SEGMENT_TIME})",
+                       '-force_key_frames', "expr:gte(t,n_forced*#{HLS_SEGMENT_TIME})",
                        '-f', 'flv',
                        'rtmp://127.0.0.1:1935/hls/stream') do |i, o, e, w|
                          puts "ffmpeg is running (pid = #{w.pid})"

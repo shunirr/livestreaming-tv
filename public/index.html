@@ -51,17 +51,24 @@
       video.play();
     });
   }
+  $.ajax({
+    type: 'GET',
+    url: 'current_channel.json',
+    cache: false,
+    success: function(json) {
+      document.getElementById(json[1]).checked = true;
+    }
+  });
 </script>
 <form id="channel_list" name="channel_list">
-<input type="radio" id="1" name="ch" value="1"><label for="1">ＮＨＫ総合・東京</label>
-<input type="radio" id="2" name="ch" value="2"><label for="2">ＮＨＫＥテレ東京</label>
-<input type="radio" id="4" name="ch" value="4"><label for="4">日本テレビ</label>
-<input type="radio" id="5" name="ch" value="5"><label for="5">テレビ朝日</label>
-<input type="radio" id="6" name="ch" value="6"><label for="6">ＴＢＳ</label>
-<input type="radio" id="7" name="ch" value="7"><label for="7">テレビ東京</label>
+<input type="radio" id="14" name="ch" value="14"><label for="14">ＮＨＫ総合・東京</label>
+<input type="radio" id="13" name="ch" value="13"><label for="13">ＮＨＫＥテレ東京</label>
+<input type="radio" id="12" name="ch" value="12"><label for="12">日本テレビ</label>
+<input type="radio" id="11" name="ch" value="11"><label for="11">テレビ朝日</label>
+<input type="radio" id="9" name="ch" value="9"><label for="9">ＴＢＳ</label>
+<input type="radio" id="10" name="ch" value="10"><label for="10">テレビ東京</label>
 <input type="radio" id="8" name="ch" value="8"><label for="8">フジテレビジョン</label>
-<input type="radio" id="9" name="ch" value="9"><label for="9">ＴＯＫＹＯ　ＭＸ</label>
-<input type="radio" id="12" name="ch" value="12"><label for="12">放送大学</label>
+<input type="radio" id="3" name="ch" value="3"><label for="3">ＴＯＫＹＯ　ＭＸ</label>
 <input type="button" id="channel_select" onclick="selectChannel()" value="SELECT">
 </form>
 <br><br>

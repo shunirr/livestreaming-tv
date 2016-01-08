@@ -2,6 +2,7 @@
 
 require 'open3'
 require 'time'
+require 'json'
 require 'sinatra'
 require 'twitter'
 require 'tempfile'
@@ -9,11 +10,24 @@ require 'tempfile'
 RECTEST_PATH    = 'C:/tv/TVTest/RecTest.exe'
 RECTEST_PORT    = 3456
 FFMPEG_PATH     = 'C:/tv/ffmpeg/bin/ffmpeg.exe'
+EPGDUMP_PATH    = 'C:/tv/epgdump/epgdump.exe'
+BONDRIVER_PATH  = 'C:/tv/TVTest/BonDriver_Spinel_PT-T0.dll'
+BONDRIVER_CONTROLLER_PATH = 'C:/tv/TVTest/BonDriverController.exe'
 
 TS_FPS           = 24
 HLS_SEGMENT_TIME = 2
 
 module LiveStreamingTV
+  class BonDriverController
+    def self.channel(ch = nil)
+      if ch.nil?
+        Open3.capture2e(BONDRIVER_CONTROLLER_PATH, BONDRIVER_PATH)[0].split(' ').map{|s| s.to_i}
+      else
+        Open3.capture2e(BONDRIVER_CONTROLLER_PATH, BONDRIVER_PATH, '0', ch.to_s)[0]
+      end
+    end
+  end
+
   class RecTest
     def initialize
       @pid = 0
@@ -40,11 +54,11 @@ module LiveStreamingTV
         puts "start rectest (ch = #{@ch})"
 	loop {
           if @ch > 0
-            Open3.popen3(RECTEST_PATH, '/rch', @ch.to_s, '/udp', '/udpport', RECTEST_PORT.to_s) do |i, o, e, w|
+            Open3.popen3(RECTEST_PATH, '/d', BONDRIVER_PATH, '/rch', @ch.to_s, '/udp', '/udpport', RECTEST_PORT.to_s) do |i, o, e, w|
               @pid = w.pid
             end
           else
-            Open3.popen3(RECTEST_PATH, '/udp', '/udpport', RECTEST_PORT.to_s) do |i, o, e, w|
+            Open3.popen3(RECTEST_PATH, '/d', BONDRIVER_PATH, '/udp', '/udpport', RECTEST_PORT.to_s) do |i, o, e, w|
               @pid = w.pid
             end
           end
@@ -81,7 +95,7 @@ module LiveStreamingTV
         loop {
           puts "start ffmpeg"
           now = Time.now.to_i
-          Open3.popen3(FFMPEG_PATH,
+          Open3.popen2e(FFMPEG_PATH,
                        # '-fflags', '+discardcorrupt',
                        '-i', "udp://127.0.0.1:#{RECTEST_PORT}?pkt_size=262144^&fifo_size=1000000^&overrun_nonfatal=1",
                        '-threads', 'auto',
@@ -89,15 +103,18 @@ module LiveStreamingTV
                        '-acodec', 'libfdk_aac', '-ar', '44100', '-ab', '128k', '-ac', '2',
                        # '-vcodec', 'libx264', '-s', '1280x720', '-aspect', '16:9', '-vb', '1m',
                        '-vcodec', 'libx264', '-s', '640x360', '-aspect', '16:9', '-vb', '500k',
-                       '-vsync', '1',
-                       '-r', TS_FPS.to_s,
+                       '-vsync', '1', '-async', '100',
+                       '-r', "#{TS_FPS}",
                        '-g', "#{TS_FPS}",
                        '-force_key_frames', "expr:gte(t,n_forced*#{HLS_SEGMENT_TIME})",
                        '-f', 'flv',
-                       'rtmp://127.0.0.1:1935/hls/stream') do |i, o, e, w|
+                       'rtmp://127.0.0.1:1935/hls/stream') do |i, o, w|
                          puts "ffmpeg is running (pid = #{w.pid})"
                          @pid = w.pid
-                         e.each {|l| puts l}
+                         o.each do |l|
+                           puts l
+                           stop if l.include? 'New audio stream'
+                         end
                        end
           puts "ffmpeg is dead"
           @pid = 0
@@ -127,14 +144,19 @@ module LiveStreamingTV
     end
 
     get '/' do
-      File.read(File.join('public', 'index.html'))
+       File.read(File.join('public', 'index.html'))
+    end
+
+    get '/current_channel.json' do
+      content_type :json
+      BonDriverController.channel.to_json
     end
 
     post '/select_channel' do
       ch = params[:ch].to_i
       puts "select ch = #{ch}"
-      settings.rectest.restart ch
-      settings.ffmpeg.restart
+      BonDriverController.channel ch
+      # settings.ffmpeg.restart
       200
     end
 

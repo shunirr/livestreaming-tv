@@ -17,6 +17,11 @@ LiveStreaming TV
 ## Usage
 
 ```sh
+bundle install --path vendor/bundle
+bundle exec rake db:migrate
+```
+
+```sh
 SET CONSUMER_KEY=YOUR_TWITTER_CONSUMER_KEY
 SET CONSUMER_SECRET=YOUR_TWITTER_CONSUMER_SECRET
 SET ACCESS_TOKEN=YOUR_TWITTER_ACCESS_TOKEN

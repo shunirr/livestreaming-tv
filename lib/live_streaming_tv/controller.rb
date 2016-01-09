@@ -7,9 +7,10 @@ require 'yaml'
 module LiveStreamingTV
   class Controller < Sinatra::Base
     configure do
-      set :config, (YAML::load_file('config/config.yaml') rescue {})
+      set :config, YAML::load_file('config/config.yaml')
       set :ffmpeg, FFmpeg.new(settings.config)
       set :controller, BonDriverController.new(settings.config)
+      set :database, ActiveRecord::Base.establish_connection(YAML::load_file('config/database.yaml'))
       settings.ffmpeg.start
 
       client = Twitter::REST::Client.new do |config|
@@ -23,6 +24,10 @@ module LiveStreamingTV
 
     get '/' do
       File.read(File.join('public', 'index.html'))
+    end
+
+    get '/channels.json' do
+      Model::Channels.find(:all).to_json
     end
 
     get '/current_channel.json' do

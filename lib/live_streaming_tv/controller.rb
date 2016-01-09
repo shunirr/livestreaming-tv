@@ -26,16 +26,28 @@ module LiveStreamingTV
       File.read(File.join('public', 'index.html'))
     end
 
-    get '/channels.json' do
-      Model::Channel.all.to_json
-    end
-
-    get '/current_channel.json' do
+    get '/channels' do
       content_type :json
-      settings.controller.channel.to_json
+      Model::Ch2.all.to_json
     end
 
-    post '/select_channel' do
+    get '/channels/current' do
+      c = settings.controller.channel
+      ch2 = LiveStreamingTV::Model::Ch2.find_by(tuning_space: c[0], channel_number: c[1])
+      if channel
+        content_type :json
+        ch2.to_json
+      else
+        404
+      end
+    end
+
+    get '/programmes' do
+      content_type :json
+      LiveStreamingTV::Model::Programme.where('stop > ?', Time.now).limit(30).to_json
+    end
+
+    post '/channels/select' do
       ch = params[:ch].to_i
       settings.controller.channel(ch)
       200

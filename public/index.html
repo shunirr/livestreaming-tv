@@ -6,12 +6,15 @@
 <script src="js/jquery.js"></script>
 <script>
   function selectChannel() {
-    $.ajax({
-      type: 'POST',
-      url: 'select_channel',
-      cache: false,
-      data: { ch: $('#channel_list [name=ch]:checked').val() }
-    });
+    var checked = $('#channel_list [name=ch]:checked');
+    if (checked.length == 1) {
+      $.ajax({
+        type: 'POST',
+        url: 'channels/select',
+        cache: false,
+        data: { ch: checked.val() }
+      });
+    }
   }
   function capture() {
     var v = document.getElementById('video');
@@ -27,6 +30,16 @@
       data: { url: c.toDataURL() },
       success: function() {
         c.remove();
+      }
+    });
+  }
+  function getCurrentChannel() {
+    $.ajax({
+      type: 'GET',
+      url: 'channels/current',
+      cache: false,
+      success: function(json) {
+        document.getElementById(json[1]).checked = true;
       }
     });
   }
@@ -53,23 +66,27 @@
   }
   $.ajax({
     type: 'GET',
-    url: 'current_channel.json',
-    cache: false,
-    success: function(json) {
-      document.getElementById(json[1]).checked = true;
+    url: 'channels',
+    success: function(channels) {
+      var channel_list = $('#channel_list');
+      for (var i in channels) {
+        var input = $('<input>');
+        input.attr('type', 'radio');
+        input.attr('name', 'ch');
+        input.attr('id', channels[i].channel_number);
+        input.attr('value', channels[i].channel_number);
+        var label = $('<label>');
+        label.attr('for', channels[i].channel_number);
+        label.text(channels[i].name);
+        input.appendTo(channel_list);
+        label.appendTo(channel_list);
+      }
+      getCurrentChannel();
     }
   });
 </script>
 <form id="channel_list" name="channel_list">
-<input type="radio" id="14" name="ch" value="14"><label for="14">ＮＨＫ総合・東京</label>
-<input type="radio" id="13" name="ch" value="13"><label for="13">ＮＨＫＥテレ東京</label>
-<input type="radio" id="12" name="ch" value="12"><label for="12">日本テレビ</label>
-<input type="radio" id="11" name="ch" value="11"><label for="11">テレビ朝日</label>
-<input type="radio" id="9" name="ch" value="9"><label for="9">ＴＢＳ</label>
-<input type="radio" id="10" name="ch" value="10"><label for="10">テレビ東京</label>
-<input type="radio" id="8" name="ch" value="8"><label for="8">フジテレビジョン</label>
-<input type="radio" id="3" name="ch" value="3"><label for="3">ＴＯＫＹＯ　ＭＸ</label>
-<input type="button" id="channel_select" onclick="selectChannel()" value="SELECT">
 </form>
+<input type="button" id="channel_select" onclick="selectChannel()" value="SELECT">
 </body>
 </html>

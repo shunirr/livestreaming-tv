@@ -4,3 +4,11 @@ epgdump_path: 'C:/tv/epgdump/epgdump.exe'
 bondriver_path: 'C:/tv/TVTest/BonDriver_Spinel_PT-T0.dll'
 bondriver_controller_path: 'C:/tv/TVTest/BonDriverController.exe'
 rtmp_url: 'rtmp://127.0.0.1:1935/hls/stream'
+ffmpeg:
+  r: 24
+  hls_segment_time: 2
+  # s: '1280x720'
+  s: '800x450'
+  # s: '640x360'
+  vb: '1m'
+  # vb: '500k'

@@ -7,9 +7,6 @@ require 'twitter'
 require 'tempfile'
 require 'yaml'
 
-TS_FPS           = 24
-HLS_SEGMENT_TIME = 2
-
 module LiveStreamingTV
   class BonDriverController
     def initialize(config)
@@ -48,13 +45,11 @@ module LiveStreamingTV
                         '-threads', 'auto',
                         '-map', '0:0', '-map', '0:1',
                         '-acodec', 'libfdk_aac', '-ar', '44100', '-ab', '128k', '-ac', '2',
-                        # '-vcodec', 'libx264', '-s', '1280x720', '-aspect', '16:9', '-vb', '1m',
-                        '-vcodec', 'libx264', '-s', '800x450', '-aspect', '16:9', '-vb', '1m',
-                        # '-vcodec', 'libx264', '-s', '640x360', '-aspect', '16:9', '-vb', '500k',
+                        '-vcodec', 'libx264', '-s', @config['ffmpeg']['s'], '-aspect', '16:9', '-vb', @config['ffmpeg']['vb'],
                         '-vsync', '1', '-async', '50',
-                        '-r', "#{TS_FPS}",
-                        '-g', "#{TS_FPS}",
-                        '-force_key_frames', "expr:gte(t,n_forced*#{HLS_SEGMENT_TIME})",
+                        '-r', @config['ffmpeg']['r'],
+                        '-g', @config['ffmpeg']['r'],
+                        '-force_key_frames', "expr:gte(t,n_forced*#{@config['ffmpeg']['hls_segment_time']})",
                         '-f', 'flv',
                         @config['rtmp_url']) do |i, o, w|
                           @pid = w.pid

@@ -96,14 +96,14 @@ module LiveStreamingTV
           puts "start ffmpeg"
           now = Time.now.to_i
           Open3.popen2e(FFMPEG_PATH,
-                       # '-fflags', '+discardcorrupt',
                        '-i', "udp://127.0.0.1:#{RECTEST_PORT}?pkt_size=262144^&fifo_size=1000000^&overrun_nonfatal=1",
                        '-threads', 'auto',
                        '-map', '0:0', '-map', '0:1',
                        '-acodec', 'libfdk_aac', '-ar', '44100', '-ab', '128k', '-ac', '2',
                        # '-vcodec', 'libx264', '-s', '1280x720', '-aspect', '16:9', '-vb', '1m',
-                       '-vcodec', 'libx264', '-s', '640x360', '-aspect', '16:9', '-vb', '500k',
-                       '-vsync', '1', '-async', '100',
+                       '-vcodec', 'libx264', '-s', '800x450', '-aspect', '16:9', '-vb', '1m',
+                       # '-vcodec', 'libx264', '-s', '640x360', '-aspect', '16:9', '-vb', '500k',
+                       '-vsync', '1', '-async', '50',
                        '-r', "#{TS_FPS}",
                        '-g', "#{TS_FPS}",
                        '-force_key_frames', "expr:gte(t,n_forced*#{HLS_SEGMENT_TIME})",
@@ -114,6 +114,12 @@ module LiveStreamingTV
                          o.each do |l|
                            puts l
                            stop if l.include? 'New audio stream'
+                           if l.include? 'speed='
+                             l.match /speed=([0-9.]+)x/ do |md|
+                               speed = md[1].to_f
+                               stop if speed < 0.8
+                             end
+                           end
                          end
                        end
           puts "ffmpeg is dead"

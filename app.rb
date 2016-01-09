@@ -73,7 +73,7 @@ module LiveStreamingTV
 
   class Controller < Sinatra::Base
     configure do
-      set :config, (YAML::load_file('config.yaml') rescue {})
+      set :config, (YAML::load_file('config/config.yaml') rescue {})
       set :ffmpeg, FFmpeg.new(settings.config)
       set :controller, BonDriverController.new(settings.config)
       settings.ffmpeg.start

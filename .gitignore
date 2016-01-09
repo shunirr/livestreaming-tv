@@ -3,5 +3,6 @@ vendor/bundle
 public/hls/*.m3u8
 public/hls/*.ts
 *.xml
+db/*.sqlite
 run.bat
 run.sh

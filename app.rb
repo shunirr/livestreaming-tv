@@ -5,23 +5,20 @@ require 'json'
 require 'sinatra'
 require 'twitter'
 require 'tempfile'
-
-RECTEST_URL     = 'udp://127.0.0.1:3456'
-FFMPEG_PATH     = 'C:/tv/ffmpeg/bin/ffmpeg.exe'
-EPGDUMP_PATH    = 'C:/tv/epgdump/epgdump.exe'
-BONDRIVER_PATH  = 'C:/tv/TVTest/BonDriver_Spinel_PT-T0.dll'
-BONDRIVER_CONTROLLER_PATH = 'C:/tv/TVTest/BonDriverController.exe'
+require 'yaml'
 
 TS_FPS           = 24
 HLS_SEGMENT_TIME = 2
+
+$config = YAML::load_file('config.yaml') rescue {}
 
 module LiveStreamingTV
   class BonDriverController
     def self.channel(ch = nil)
       if ch.nil?
-        Open3.capture2e(BONDRIVER_CONTROLLER_PATH, BONDRIVER_PATH)[0].split(' ').map{|s| s.to_i}
+        Open3.capture2e($config[:bondriver_controller_path], $config[:bondriver_path])[0].split(' ').map{|s| s.to_i}
       else
-        Open3.capture2e(BONDRIVER_CONTROLLER_PATH, BONDRIVER_PATH, '0', ch.to_s)[0]
+        Open3.capture2e($config[:bondriver_controller_path], $config[:bondriver_path], '0', ch.to_s)[0]
       end
     end
   end
@@ -43,8 +40,8 @@ module LiveStreamingTV
       Thread.start do
         loop do
           puts "start ffmpeg"
-          Open3.popen2e(FFMPEG_PATH,
-                        '-i', "#{RECTEST_URL}?pkt_size=262144^&fifo_size=1000000^&overrun_nonfatal=1",
+          Open3.popen2e($config[:ffmpeg_path],
+                        '-i', "#{$config[:rectest_url]}?pkt_size=262144^&fifo_size=1000000^&overrun_nonfatal=1",
                         '-threads', 'auto',
                         '-map', '0:0', '-map', '0:1',
                         '-acodec', 'libfdk_aac', '-ar', '44100', '-ab', '128k', '-ac', '2',

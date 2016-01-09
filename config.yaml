@@ -1,0 +1,5 @@
+rectest_url: 'udp://127.0.0.1:3456'
+ffmpeg_path: 'C:/tv/ffmpeg/bin/ffmpeg.exe'
+epgdump_path: 'C:/tv/epgdump/epgdump.exe'
+bondriver_path: 'C:/tv/TVTest/BonDriver_Spinel_PT-T0.dll'
+bondriver_controller_path: 'C:/tv/TVTest/BonDriverController.exe'

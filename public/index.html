@@ -73,10 +73,10 @@
         var input = $('<input>');
         input.attr('type', 'radio');
         input.attr('name', 'ch');
-        input.attr('id', channels[i].channel_number);
-        input.attr('value', channels[i].channel_number);
+        input.attr('id', channels[i].remocon_number);
+        input.attr('value', channels[i].remocon_number);
         var label = $('<label>');
-        label.attr('for', channels[i].channel_number);
+        label.attr('for', channels[i].remocon_number);
         label.text(channels[i].name);
         input.appendTo(channel_list);
         label.appendTo(channel_list);

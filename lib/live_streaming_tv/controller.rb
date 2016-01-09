@@ -32,14 +32,8 @@ module LiveStreamingTV
     end
 
     get '/channels/current' do
-      c = settings.controller.channel
-      ch2 = LiveStreamingTV::Model::Ch2.find_by(tuning_space: c[0], channel_number: c[1])
-      if channel
-        content_type :json
-        ch2.to_json
-      else
-        404
-      end
+      content_type :json
+      settings.controller.channel.to_json
     end
 
     get '/programmes' do

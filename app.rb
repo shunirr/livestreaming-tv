@@ -10,22 +10,25 @@ require 'yaml'
 TS_FPS           = 24
 HLS_SEGMENT_TIME = 2
 
-$config = YAML::load_file('config.yaml') rescue {}
-
 module LiveStreamingTV
   class BonDriverController
-    def self.channel(ch = nil)
+    def initialize(config)
+      @config = config
+    end
+
+    def channel(ch = nil)
       if ch.nil?
-        Open3.capture2e($config[:bondriver_controller_path], $config[:bondriver_path])[0].split(' ').map{|s| s.to_i}
+        Open3.capture2e(@config['bondriver_controller_path'], @config['bondriver_path'])[0].split(' ').map{|s| s.to_i}
       else
-        Open3.capture2e($config[:bondriver_controller_path], $config[:bondriver_path], '0', ch.to_s)[0]
+        Open3.capture2e(@config['bondriver_controller_path'], @config['bondriver_path'], '0', ch.to_s)[0]
       end
     end
   end
 
   class FFmpeg
-    def initialize
+    def initialize(config)
       @pid = 0
+      @config = config
     end
 
     def stop
@@ -40,8 +43,8 @@ module LiveStreamingTV
       Thread.start do
         loop do
           puts "start ffmpeg"
-          Open3.popen2e($config[:ffmpeg_path],
-                        '-i', "#{$config[:rectest_url]}?pkt_size=262144^&fifo_size=1000000^&overrun_nonfatal=1",
+          Open3.popen2e(@config['ffmpeg_path'],
+                        '-i', "#{@config['rectest_url']}?pkt_size=262144^&fifo_size=1000000^&overrun_nonfatal=1",
                         '-threads', 'auto',
                         '-map', '0:0', '-map', '0:1',
                         '-acodec', 'libfdk_aac', '-ar', '44100', '-ab', '128k', '-ac', '2',
@@ -53,7 +56,7 @@ module LiveStreamingTV
                         '-g', "#{TS_FPS}",
                         '-force_key_frames', "expr:gte(t,n_forced*#{HLS_SEGMENT_TIME})",
                         '-f', 'flv',
-                        'rtmp://127.0.0.1:1935/hls/stream') do |i, o, w|
+                        @config['rtmp_url']) do |i, o, w|
                           @pid = w.pid
                           o.each do |l|
                             puts l
@@ -66,6 +69,7 @@ module LiveStreamingTV
                             end
                           end
                         end
+          puts "dead ffmpeg"
           @pid = 0
         end
       end
@@ -74,7 +78,9 @@ module LiveStreamingTV
 
   class Controller < Sinatra::Base
     configure do
-      set :ffmpeg, FFmpeg.new
+      set :config, (YAML::load_file('config.yaml') rescue {})
+      set :ffmpeg, FFmpeg.new(settings.config)
+      set :controller, BonDriverController.new(settings.config)
       settings.ffmpeg.start
 
       client = Twitter::REST::Client.new do |config|
@@ -92,12 +98,12 @@ module LiveStreamingTV
 
     get '/current_channel.json' do
       content_type :json
-      BonDriverController.channel.to_json
+      settings.controller.channel.to_json
     end
 
     post '/select_channel' do
       ch = params[:ch].to_i
-      BonDriverController.channel(ch)
+      settings.controller.channel(ch)
       200
     end
 

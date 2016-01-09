@@ -27,7 +27,7 @@ module LiveStreamingTV
     end
 
     get '/channels.json' do
-      Model::Channels.find(:all).to_json
+      Model::Channel.all.to_json
     end
 
     get '/current_channel.json' do

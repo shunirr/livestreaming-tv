@@ -6,7 +6,7 @@ class CreateTables < ActiveRecord::Migration
       t.column :display_name, :string, :null => false
       t.column :transport_stream_id, :integer, :null => false
       t.column :original_network_id, :integer, :null => false
-      t.column :service_id, :integer, :null => false
+      t.column :service_id, :integer, :null => false, :primary => true
       t.timestamps :null => false
     end
     create_table :programmes do |t|

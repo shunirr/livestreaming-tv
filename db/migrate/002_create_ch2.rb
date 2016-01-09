@@ -5,7 +5,7 @@ class CreateCh2 < ActiveRecord::Migration
       t.column :tuning_space, :integer, :null => false
       t.column :channel_number, :integer, :null => false
       t.column :remocon_number, :integer, :null => false
-      t.column :service_id, :integer, :null => false
+      t.column :service_id, :integer, :null => false, :primary => true
       t.column :network_id, :integer, :null => false
       t.column :tsid, :integer, :null => false
       t.column :status, :integer, :null => false

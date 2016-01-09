@@ -38,7 +38,18 @@ module LiveStreamingTV
 
     get '/programmes' do
       content_type :json
-      LiveStreamingTV::Model::Programme.where('stop > ?', Time.now).limit(30).to_json
+      channels = LiveStreamingTV::Model::Ch2.all
+      now = Time.now
+      ret = []
+      channels.each do |c|
+        ret.concat LiveStreamingTV::Model::Programme
+         .joins('INNER JOIN channels ON programmes.channel = channels.channel_id')
+         .joins('INNER JOIN ch2s ON channels.service_id = ch2s.service_id')
+         .select('programmes.*, channels.service_id, ch2s.name')
+         .where('ch2s.service_id = ? AND stop > ?', c.service_id, now)
+         .limit(5)
+      end
+      ret.to_json
     end
 
     post '/channels/select' do

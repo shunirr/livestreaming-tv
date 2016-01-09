@@ -84,9 +84,35 @@
       getCurrentChannel();
     }
   });
+  $.ajax({
+    type: 'GET',
+    url: 'programmes',
+    success: function(programmes) {
+      var timetable = $('#timetable');
+      var ul = $('<ul>');
+      for (var i in programmes) {
+        var programme = programmes[i];
+        var li = $('<li>');
+        var start = new Date(programme.start);
+        var stop = new Date(programme.stop);
+        li.text(
+          (start.getMonth() + 1) + '/' + start.getDate() + ' ' +
+          start.getHours() + ':' + ('0' + start.getMinutes()).substr(-2) + ' - ' +
+          stop.getHours() + ':' + ('0' + stop.getMinutes()).substr(-2));
+        var ul2 = $('<ul>');
+        var li2 = $('<li>');
+        li2.text(programme.name + ' ' + programme.title);
+        li2.appendTo(ul2);
+        ul2.appendTo(li);
+        li.appendTo(ul);
+      }
+      ul.appendTo(timetable);
+    }
+  });
 </script>
 <form id="channel_list" name="channel_list">
 </form>
 <input type="button" id="channel_select" onclick="selectChannel()" value="SELECT">
+<div id="timetable"></div>
 </body>
 </html>

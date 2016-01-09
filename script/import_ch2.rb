@@ -15,7 +15,7 @@ ActiveRecord::Base.establish_connection(config)
 raw = open(ARGV.shift).read
 raw.encode!('UTF-8', 'Shift_JIS') unless raw.valid_encoding?
 
-raw.split("\r\n").each do |line|
+raw.split("\n").each do |line|
   next if line.start_with? ';'
   data = line.split(',')
   ch2 = LiveStreamingTV::Model::Ch2.find_or_initialize_by(

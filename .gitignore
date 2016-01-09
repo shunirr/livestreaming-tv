@@ -2,5 +2,6 @@
 vendor/bundle
 public/hls/*.m3u8
 public/hls/*.ts
+*.xml
 run.bat
 run.sh

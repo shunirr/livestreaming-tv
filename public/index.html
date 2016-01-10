@@ -3,119 +3,13 @@
 <head>
 <title>Live Streaming TV</title>
 <script src="js/hls.js"></script>
-<script src="js/jquery.js"></script>
-<script>
-  function selectChannel() {
-    var checked = $('#channel_list [name=ch]:checked');
-    if (checked.length == 1) {
-      $.ajax({
-        type: 'POST',
-        url: 'channels/select',
-        cache: false,
-        data: { ch: checked.val() }
-      });
-    }
-  }
-  function capture() {
-    var v = document.getElementById('video');
-    var c = document.createElement('canvas');
-    var ctx = c.getContext('2d');
-    c.width = v.videoWidth;
-    c.height = v.videoHeight;
-    ctx.drawImage(v, 0, 0);
-    $.ajax({
-      type: 'POST',
-      url: 'tweet',
-      cache: false,
-      data: { url: c.toDataURL() },
-      success: function() {
-        c.remove();
-      }
-    });
-  }
-  function getCurrentChannel() {
-    $.ajax({
-      type: 'GET',
-      url: 'channels/current',
-      cache: false,
-      success: function(json) {
-        document.getElementById(json[1]).checked = true;
-      }
-    });
-  }
-  function bind() {
-    $(window).keyup(function(e) {
-      if (e.keyCode == 84) {
-        this.capture();
-      }
-    });
-  }
-</script>
+<script src="js/main.js"></script>
 </head>
-<body onload="bind()">
+<body>
 <video controls autoplay id="video" width="100%"></video>
-<script>
-  var videoSrc = 'hls/stream.m3u8';
-  var video = document.getElementById('video');
-  if (document.createElement('video').canPlayType('application/vnd.apple.mpegURL')) {
-    video.setAttribute('src', videoSrc);
-  } else if (Hls.isSupported()) {
-    var hls = new Hls();
-    hls.loadSource(videoSrc);
-    hls.attachMedia(video);
-    hls.on(Hls.Events.MANIFEST_PARSED, function() {
-      video.play();
-    });
-  }
-  $.ajax({
-    type: 'GET',
-    url: 'channels',
-    success: function(channels) {
-      var channel_list = $('#channel_list');
-      for (var i in channels) {
-        var input = $('<input>');
-        input.attr('type', 'radio');
-        input.attr('name', 'ch');
-        input.attr('id', channels[i].remocon_number);
-        input.attr('value', channels[i].remocon_number);
-        var label = $('<label>');
-        label.attr('for', channels[i].remocon_number);
-        label.text(channels[i].name);
-        input.appendTo(channel_list);
-        label.appendTo(channel_list);
-      }
-      getCurrentChannel();
-    }
-  });
-  $.ajax({
-    type: 'GET',
-    url: 'programmes',
-    success: function(programmes) {
-      var timetable = $('#timetable');
-      var ul = $('<ul>');
-      for (var i in programmes) {
-        var programme = programmes[i];
-        var li = $('<li>');
-        var start = new Date(programme.start);
-        var stop = new Date(programme.stop);
-        li.text(
-          (start.getMonth() + 1) + '/' + start.getDate() + ' ' +
-          start.getHours() + ':' + ('0' + start.getMinutes()).substr(-2) + ' - ' +
-          stop.getHours() + ':' + ('0' + stop.getMinutes()).substr(-2));
-        var ul2 = $('<ul>');
-        var li2 = $('<li>');
-        li2.text(programme.name + ' ' + programme.title);
-        li2.appendTo(ul2);
-        ul2.appendTo(li);
-        li.appendTo(ul);
-      }
-      ul.appendTo(timetable);
-    }
-  });
-</script>
 <form id="channel_list" name="channel_list">
 </form>
-<input type="button" id="channel_select" onclick="selectChannel()" value="SELECT">
+<input type="button" id="channel_select" value="SELECT">
 <div id="timetable"></div>
 </body>
 </html>

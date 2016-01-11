@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 $:.unshift '../lib', './lib'
 
 require 'rexml/document'

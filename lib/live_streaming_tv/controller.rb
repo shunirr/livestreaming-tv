@@ -7,6 +7,7 @@ require 'yaml'
 module LiveStreamingTV
   class Controller < Sinatra::Base
     configure do
+      disable :protection
       set :config, YAML::load_file('config/config.yaml')
       set :ffmpeg, FFmpeg.new(settings.config)
       set :controller, BonDriverController.new(settings.config)

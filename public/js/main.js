@@ -86,8 +86,8 @@
     var canvas = document.createElement('canvas');
     var context = canvas.getContext('2d');
     var body = new FormData();
-    context.width = video.width;
-    context.height = context.height;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
     context.drawImage(video, 0, 0);
     body.append('url', canvas.toDataURL());
     fetch('tweet', {

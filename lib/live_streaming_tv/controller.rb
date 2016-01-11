@@ -48,7 +48,7 @@ module LiveStreamingTV
          .joins('INNER JOIN ch2s ON channels.service_id = ch2s.service_id')
          .select('programmes.*, channels.service_id, ch2s.name')
          .where('ch2s.service_id = ? AND stop > ?', c.service_id, now)
-         .limit(5)
+         .limit(1)
       end
       ret.to_json
     end

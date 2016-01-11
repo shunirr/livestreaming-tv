@@ -11,8 +11,7 @@
   }
 
   function formatDate(start, stop) {
-    return (start.getMonth() + 1) + '/' + start.getDate() + ' ' +
-      start.getHours() + ':' + ('0' + start.getMinutes()).substr(-2) + ' - ' +
+    return start.getHours() + ':' + ('0' + start.getMinutes()).substr(-2) + ' - ' +
       stop.getHours() + ':' + ('0' + stop.getMinutes()).substr(-2);
   }
 

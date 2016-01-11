@@ -23,6 +23,10 @@ module LiveStreamingTV
       set :twitter_client, client
     end
 
+    before do
+      cache_control :no_cache
+    end
+
     get '/' do
       File.read(File.join('public', 'index.html'))
     end

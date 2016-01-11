@@ -10,9 +10,8 @@
     return response.json();
   }
 
-  function formatDate(start, stop) {
-    return start.getHours() + ':' + ('0' + start.getMinutes()).substr(-2) + ' - ' +
-      stop.getHours() + ':' + ('0' + stop.getMinutes()).substr(-2);
+  function formatDate(date) {
+    return date.getHours() + ':' + ('0' + date.getMinutes()).substr(-2);
   }
 
   function selectChannel(event) {
@@ -63,20 +62,70 @@
 
   function initProgrammes(programmes) {
     var timetable = document.getElementById('timetable');
-    var ul = document.createElement('ul');
+    var table = document.createElement('table');
+    table.setAttribute('border', '1');
+    var channels = {};
     programmes.forEach(function(programme) {
-      var li = document.createElement('li');
-      var ul2 = document.createElement('ul');
-      var li2 = document.createElement('li');
-      var start = new Date(programme.start);
-      var stop = new Date(programme.stop);
-      li.textContent = formatDate(start, stop);
-      li2.textContent = [programme.name, programme.title].join(' ');
-      ul2.appendChild(li2);
-      li.appendChild(ul2);
-      ul.appendChild(li);
+      if (typeof channels[programme.name] === 'undefined') {
+        channels[programme.name] = [];
+      }
+      channels[programme.name].push(programme);
     });
-    timetable.appendChild(ul);
+
+    {
+      var tr = document.createElement('tr');
+      Object.keys(channels).forEach(function(key) {
+        var th = document.createElement('th');
+	th.textContent = key;
+        tr.appendChild(th);
+      });
+      table.appendChild(tr);
+    }
+
+    var now = new Date();
+    {
+      var tr = document.createElement('tr');
+      Object.keys(channels).forEach(function(key) {
+        var programme = channels[key][0];
+        var start = new Date(programme.start);
+        var stop = new Date(programme.stop);
+        var td = document.createElement('td');
+	var div = document.createElement('div');
+	var height = Math.floor((stop - now) / 60000);
+        div.setAttribute('style', 'max-height:' + (height * 5) + 'px; overflow:hidden;');
+        div.textContent = [formatDate(start), programme.title].join(' ');
+	td.setAttribute('valign', 'top');
+        td.setAttribute('rowspan', height);
+	td.appendChild(div);
+        tr.appendChild(td);
+      });
+      table.appendChild(tr);
+    }
+
+    for (var i = 0; i < 5 * 60; i++) {
+      var tr = document.createElement('tr');
+      Object.keys(channels).forEach(function(key) {
+        for (var j = 1; j < channels[key].length; j++) {
+	  var programme = channels[key][j];
+          var start = new Date(programme.start);
+          var stop = new Date(programme.stop);
+          var pos = Math.floor((start - now) / 60000);
+	  if (i == pos) {
+            var td = document.createElement('td');
+	    var div = document.createElement('div');
+            var height = Math.floor((stop - start) / 60000);
+            div.setAttribute('style', 'max-height:' + (height * 5) + 'px; overflow:hidden;');
+            div.textContent = [formatDate(start), programme.title].join(' ');
+	    td.setAttribute('valign', 'top');
+            td.setAttribute('rowspan', height);
+	    td.appendChild(div);
+            tr.appendChild(td);
+	  }
+	};
+      });
+      table.appendChild(tr);
+    }
+    timetable.appendChild(table);
   }
 
   function capture() {

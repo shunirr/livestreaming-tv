@@ -3,8 +3,6 @@
 
   var videoSrc = 'hls/stream.m3u8';
   var video;
-  var channelList;
-  var channelSelect;
 
   function parseJson(response) {
     return response.json();
@@ -15,12 +13,9 @@
   }
 
   function selectChannel(event) {
-    var checked = channelList.querySelector('[name="ch"]:checked');
-    if (typeof checked == 'undefined') {
-      return;
-    }
+    var ch = event.target.getAttribute('id');
     var body = new FormData();
-    body.append('ch', checked.value);
+    body.append('ch', ch);
     fetch('channels/select', {
       method: 'post',
       body: body,
@@ -30,33 +25,21 @@
     });
   }
 
-  function initChannels(channels) {
-    var df = document.createDocumentFragment();
-    channels.forEach(function(channel) {
-      var input = document.createElement('input');
-      var label = document.createElement('label');
-      var remoconNumber = channel['remocon_number'];
-      input.id = remoconNumber;
-      input.value = remoconNumber;
-      input.setAttribute('type', 'radio');
-      input.setAttribute('name', 'ch');
-      label.setAttribute('for', remoconNumber);
-      label.textContent = channel.name;
-      df.appendChild(input);
-      df.appendChild(label);
-    });
-    channelList.appendChild(df);
-    getCurrentChannel();
-  }
-
   function getCurrentChannel() {
+    console.log("getCurrentChannel()");
     fetch('channels/current', {
       method: 'get',
       mode: 'same-origin',
       credentials: 'same-origin',
       cache: 'no-store'
     }).then(parseJson).then(function(json) {
-      document.getElementById(json[1]).checked = true;
+      [].forEach.call(document.getElementsByClassName('selected'), function(element) {
+        element.classList.remove('selected');
+      });
+      [].forEach.call(document.getElementsByClassName(json[1]), function(element) {
+        element.classList.add('selected');
+      });
+      setTimeout(function() { getCurrentChannel(); }, 60000);
     });
   }
 
@@ -76,13 +59,21 @@
       var tr = document.createElement('tr');
       var width = (100 / Object.keys(channels).length) + '%';
       Object.keys(channels).forEach(function(key) {
+        var remoconNumber = channels[key][0].remocon_number;
         var th = document.createElement('th');
+	th.className = remoconNumber;
         th.setAttribute('width', width);
-	th.textContent = key;
+	var anchor = document.createElement('a');
+	anchor.textContent = key;
+	anchor.id = remoconNumber;
+	anchor.setAttribute('href', 'javascript:void(0)');
+        anchor.addEventListener('click', selectChannel);
+	th.appendChild(anchor);
         tr.appendChild(th);
       });
       table.appendChild(tr);
     }
+    getCurrentChannel();
 
     var now = new Date();
     for (var i = 0; i < 6 * 60; i++) {
@@ -93,16 +84,16 @@
           var start = new Date(programme.start);
           var stop = new Date(programme.stop);
           var pos = Math.floor((start - now) / 60000);
-	  if (i == 0 && j == 0) {
+          var remoconNumber = channels[key][0].remocon_number;
+	  var height;
+	  if (i == pos) {
+            height = Math.floor((stop - start) / 60000);
+	  } else {
+            height = Math.floor((stop - now) / 60000);
+	  }
+	  if ((i == 0 && j == 0) || i == pos) {
             var td = document.createElement('td');
-            var height = Math.floor((stop - now) / 60000);
-            td.innerHTML = [formatDate(start) + '-' + formatDate(stop), programme.title].join('<br>');
-            td.setAttribute('valign', 'top');
-            td.setAttribute('rowspan', height);
-            tr.appendChild(td);
-	  } else if (i == pos) {
-            var td = document.createElement('td');
-            var height = Math.ceil((stop - start) / 60000);
+	    td.className = remoconNumber;
             td.innerHTML = [formatDate(start) + '-' + formatDate(stop), programme.title].join('<br>');
             td.setAttribute('valign', 'top');
             td.setAttribute('rowspan', height);
@@ -140,9 +131,6 @@
   function bind() {
     var hls;
     video = document.getElementById('video');
-    channelList = document.getElementById('channel_list');
-    channelSelect = document.getElementById('channel_select');
-    channelSelect.addEventListener('click', selectChannel);
     if (video.canPlayType('application/vnd.apple.mpegURL')) {
       video.setAttribute('src', videoSrc);
     } else if (Hls.isSupported()) {
@@ -153,12 +141,6 @@
     } else {
       return;
     }
-    fetch('channels', {
-      method: 'get',
-      mode: 'same-origin',
-      credentials: 'same-origin',
-      cache: 'no-store'
-    }).then(parseJson).then(initChannels);
     fetch('programmes', {
       method: 'get',
       mode: 'same-origin',

@@ -74,8 +74,10 @@
 
     {
       var tr = document.createElement('tr');
+      var width = (100 / Object.keys(channels).length) + '%';
       Object.keys(channels).forEach(function(key) {
         var th = document.createElement('th');
+        th.setAttribute('width', width);
 	th.textContent = key;
         tr.appendChild(th);
       });
@@ -83,45 +85,30 @@
     }
 
     var now = new Date();
-    {
+    for (var i = 0; i < 6 * 60; i++) {
       var tr = document.createElement('tr');
       Object.keys(channels).forEach(function(key) {
-        var programme = channels[key][0];
-        var start = new Date(programme.start);
-        var stop = new Date(programme.stop);
-        var td = document.createElement('td');
-	var div = document.createElement('div');
-	var height = Math.floor((stop - now) / 60000);
-        div.setAttribute('style', 'max-height:' + (height * 5) + 'px; overflow:hidden;');
-        div.textContent = [formatDate(start), programme.title].join(' ');
-	td.setAttribute('valign', 'top');
-        td.setAttribute('rowspan', height);
-	td.appendChild(div);
-        tr.appendChild(td);
-      });
-      table.appendChild(tr);
-    }
-
-    for (var i = 0; i < 5 * 60; i++) {
-      var tr = document.createElement('tr');
-      Object.keys(channels).forEach(function(key) {
-        for (var j = 1; j < channels[key].length; j++) {
-	  var programme = channels[key][j];
+        for (var j = 0; j < channels[key].length; j++) {
+          var programme = channels[key][j];
           var start = new Date(programme.start);
           var stop = new Date(programme.stop);
           var pos = Math.floor((start - now) / 60000);
-	  if (i == pos) {
+	  if (i == 0 && j == 0) {
             var td = document.createElement('td');
-	    var div = document.createElement('div');
-            var height = Math.floor((stop - start) / 60000);
-            div.setAttribute('style', 'max-height:' + (height * 5) + 'px; overflow:hidden;');
-            div.textContent = [formatDate(start), programme.title].join(' ');
-	    td.setAttribute('valign', 'top');
+            var height = Math.floor((stop - now) / 60000);
+            td.innerHTML = [formatDate(start) + '-' + formatDate(stop), programme.title].join('<br>');
+            td.setAttribute('valign', 'top');
             td.setAttribute('rowspan', height);
-	    td.appendChild(div);
             tr.appendChild(td);
-	  }
-	};
+	  } else if (i == pos) {
+            var td = document.createElement('td');
+            var height = Math.ceil((stop - start) / 60000);
+            td.innerHTML = [formatDate(start) + '-' + formatDate(stop), programme.title].join('<br>');
+            td.setAttribute('valign', 'top');
+            td.setAttribute('rowspan', height);
+            tr.appendChild(td);
+          }
+        };
       });
       table.appendChild(tr);
     }

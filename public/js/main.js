@@ -3,6 +3,7 @@
 
   var videoSrc = 'hls/stream.m3u8';
   var video;
+  var timeoutID;
 
   function parseJson(response) {
     return response.json();
@@ -26,6 +27,7 @@
   }
 
   function getCurrentChannel() {
+    clearTimeout(timeoutID);
     console.log("getCurrentChannel()");
     fetch('channels/current', {
       method: 'get',
@@ -39,71 +41,84 @@
       [].forEach.call(document.getElementsByClassName(json[1]), function(element) {
         element.classList.add('selected');
       });
-      setTimeout(function() { getCurrentChannel(); }, 60000);
+      timeoutID = setTimeout(function() { getCurrentChannel(); }, 60 * 1000);
     });
   }
 
-  function initProgrammes(programmes) {
-    var timetable = document.getElementById('timetable');
-    var table = document.createElement('table');
-    table.setAttribute('border', '1');
-    var channels = {};
-    programmes.forEach(function(programme) {
-      if (typeof channels[programme.name] === 'undefined') {
-        channels[programme.name] = [];
+  function updateProgrammes() {
+    fetch('programmes', {
+      method: 'get',
+      mode: 'same-origin',
+      credentials: 'same-origin',
+      cache: 'no-store'
+    }).then(parseJson).then(function(programmes) {
+      var timetable = document.getElementById('timetable');
+      while (timetable.firstChild) {
+        timetable.removeChild(timetable.firstChild);
       }
-      channels[programme.name].push(programme);
-    });
 
-    {
-      var tr = document.createElement('tr');
-      var width = (100 / Object.keys(channels).length) + '%';
-      Object.keys(channels).forEach(function(key) {
-        var remoconNumber = channels[key][0].remocon_number;
-        var th = document.createElement('th');
-	th.className = remoconNumber;
-        th.setAttribute('width', width);
-	var anchor = document.createElement('a');
-	anchor.textContent = key;
-	anchor.id = remoconNumber;
-	anchor.setAttribute('href', 'javascript:void(0)');
-        anchor.addEventListener('click', selectChannel);
-	th.appendChild(anchor);
-        tr.appendChild(th);
+      var table = document.createElement('table');
+      table.setAttribute('border', '1');
+      var channels = {};
+      programmes.forEach(function(programme) {
+        if (typeof channels[programme.name] === 'undefined') {
+          channels[programme.name] = [];
+        }
+        channels[programme.name].push(programme);
       });
-      table.appendChild(tr);
-    }
-    getCurrentChannel();
 
-    var now = new Date();
-    for (var i = 0; i < 6 * 60; i++) {
-      var tr = document.createElement('tr');
-      Object.keys(channels).forEach(function(key) {
-        for (var j = 0; j < channels[key].length; j++) {
-          var programme = channels[key][j];
-          var start = new Date(programme.start);
-          var stop = new Date(programme.stop);
-          var pos = Math.floor((start - now) / 60000);
+      {
+        var tr = document.createElement('tr');
+        var width = (100 / Object.keys(channels).length) + '%';
+        Object.keys(channels).forEach(function(key) {
           var remoconNumber = channels[key][0].remocon_number;
-	  var height;
-	  if (i == pos) {
-            height = Math.floor((stop - start) / 60000);
-	  } else {
-            height = Math.floor((stop - now) / 60000);
-	  }
-	  if ((i == 0 && j == 0) || i == pos) {
-            var td = document.createElement('td');
-	    td.className = remoconNumber;
-            td.innerHTML = [formatDate(start) + '-' + formatDate(stop), programme.title].join('<br>');
-            td.setAttribute('valign', 'top');
-            td.setAttribute('rowspan', height);
-            tr.appendChild(td);
-          }
-        };
-      });
-      table.appendChild(tr);
-    }
-    timetable.appendChild(table);
+          var th = document.createElement('th');
+          th.className = remoconNumber;
+          th.setAttribute('width', width);
+          var anchor = document.createElement('a');
+          anchor.textContent = key;
+          anchor.id = remoconNumber;
+          anchor.setAttribute('href', 'javascript:void(0)');
+          anchor.addEventListener('click', selectChannel);
+          th.appendChild(anchor);
+          tr.appendChild(th);
+        });
+        table.appendChild(tr);
+      }
+      getCurrentChannel();
+
+      var now = new Date();
+      for (var i = 0; i < 6 * 60; i++) {
+        var tr = document.createElement('tr');
+        Object.keys(channels).forEach(function(key) {
+          for (var j = 0; j < channels[key].length; j++) {
+            var programme = channels[key][j];
+            var start = new Date(programme.start);
+            var stop = new Date(programme.stop);
+            var pos = Math.floor((start - now) / 60000);
+            var remoconNumber = channels[key][0].remocon_number;
+            var height;
+            if (i == pos) {
+              height = Math.floor((stop - start) / 60000);
+            } else {
+              height = Math.floor((stop - now) / 60000);
+            }
+            if ((i == 0 && j == 0) || i == pos) {
+              var td = document.createElement('td');
+              td.className = remoconNumber;
+              td.innerHTML = [formatDate(start) + '-' + formatDate(stop), programme.title].join('<br>');
+              td.setAttribute('valign', 'top');
+              td.setAttribute('rowspan', height);
+              tr.appendChild(td);
+            }
+          };
+        });
+        table.appendChild(tr);
+      }
+      timetable.appendChild(table);
+
+      setTimeout(function() { updateProgrammes(); }, 30 * 60 * 1000);
+    });
   }
 
   function capture() {
@@ -141,12 +156,7 @@
     } else {
       return;
     }
-    fetch('programmes', {
-      method: 'get',
-      mode: 'same-origin',
-      credentials: 'same-origin',
-      cache: 'no-store'
-    }).then(parseJson).then(initProgrammes);
+    updateProgrammes();
   }
 
   window.addEventListener('keyup', function(event) {

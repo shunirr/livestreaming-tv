@@ -6,3 +6,4 @@ public/hls/*.ts
 db/*.sqlite
 run.bat
 run.sh
+import_epg.bat

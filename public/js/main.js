@@ -28,16 +28,16 @@
 
   function getCurrentChannel() {
     clearTimeout(timeoutID);
-    var elements = document.getElementsByClassName('selected');
-    while (elements[0]) {
-      elements[0].classList.remove('selected');
-    }
     fetch('channels/current', {
       method: 'get',
       mode: 'same-origin',
       credentials: 'same-origin',
       cache: 'no-store'
     }).then(parseJson).then(function(json) {
+      var elements = document.getElementsByClassName('selected');
+      while (elements[0]) {
+        elements[0].classList.remove('selected');
+      }
       Array.prototype.forEach.call(document.getElementsByClassName(json[1]), function(element) {
         element.classList.add('selected');
       });
@@ -76,10 +76,10 @@
         }
         channels[programme.name].push(programme);
       });
+      var nextReloadTime;
       Object.keys(channels).forEach(function(key) {
         var programmes = channels[key];
         var programme = programmes[programmes.length-1];
-        console.log(programme);
         var stop = new Date(programme.stop);
         if (stop.getTime() < lastDate.getTime()) {
           programmes.push({
@@ -87,6 +87,11 @@
             'stop': lastDate,
             'title':'NO DATA'
           });
+        }
+        var currentTime = new Date(programmes[0].stop);
+        if (typeof nextReloadTime === 'undefined'
+              || nextReloadTime.getTime() > currentTime.getTime()) {
+          nextReloadTime = currentTime;
         }
       });
       {
@@ -140,7 +145,11 @@
       }
       timetable.appendChild(table);
 
-      setTimeout(function() { updateProgrammes(); }, 5 * 60 * 1000);
+      if (typeof nextReloadTime === 'undefined' || nextReloadTime.getTime() <= 0) {
+        setTimeout(function() { updateProgrammes(); }, 5 * 60 * 1000);
+      } else {
+        setTimeout(function() { updateProgrammes(); }, (nextReloadTime - now));
+      }
     });
   }
 

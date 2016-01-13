@@ -67,9 +67,8 @@
       var now = new Date();
       now.setSeconds(0, 0);
       var lastDate = new Date(now.getTime() + 6 * 60 * 60 * 1000);
+
       var actualLastDate = now;
-      var table = document.createElement('table');
-      table.className = 'mdl-data-table';
       var channels = {};
       var remoconNumbers = {};
       programmes.forEach(function(programme) {
@@ -86,6 +85,7 @@
           channels[programme.name].push(programme);
         }
       });
+
       var nextReloadTime;
       Object.keys(channels).forEach(function(key) {
         var programmes = channels[key];
@@ -115,6 +115,9 @@
           nextReloadTime = firstProgrammeStop;
         }
       });
+
+      var table = document.createElement('table');
+      table.className = 'mdl-data-table';
       {
         var tr = document.createElement('tr');
         var width = (100 / Object.keys(channels).length) + '%';

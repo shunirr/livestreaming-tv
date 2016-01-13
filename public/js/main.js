@@ -107,10 +107,10 @@
             i++;
           }
         }
-        var currentTime = new Date(programmes[0].stop);
+        var firstProgrammeStop = new Date(programmes[0].stop);
         if (typeof nextReloadTime === 'undefined'
-              || nextReloadTime.getTime() > currentTime.getTime()) {
-          nextReloadTime = currentTime;
+              || nextReloadTime > firstProgrammeStop) {
+          nextReloadTime = firstProgrammeStop;
         }
       });
       {

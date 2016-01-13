@@ -45,6 +45,14 @@
     });
   }
 
+  function createDummyData(start, stop) {
+    return {
+      'start': start,
+      'stop': stop,
+      'title':'NO DATA'
+    };
+  }
+
   function updateProgrammes() {
     fetch('programmes', {
       method: 'get',
@@ -67,11 +75,7 @@
         if (typeof channels[programme.name] === 'undefined') {
           channels[programme.name] = [];
           if (start.getTime() > now.getTime()) {
-            channels[programme.name].push({
-              'start': now,
-              'stop': start,
-              'title':'NO DATA'
-            });
+            channels[programme.name].push(createDummyData(now, start));
           }
         }
         channels[programme.name].push(programme);
@@ -79,14 +83,19 @@
       var nextReloadTime;
       Object.keys(channels).forEach(function(key) {
         var programmes = channels[key];
-        var programme = programmes[programmes.length-1];
-        var stop = new Date(programme.stop);
-        if (stop.getTime() < lastDate.getTime()) {
-          programmes.push({
-            'start': stop,
-            'stop': lastDate,
-            'title':'NO DATA'
-          });
+        for (var i = 0; i < programmes.length; i++) {
+          var programme = programmes[i];
+          var stop = new Date(programme.stop);
+          var nextStart;
+          if ((i + 1) < programmes.length) {
+            nextStart = new Date(programmes[i + 1].start);
+          } else {
+            nextStart = new Date(lastDate);
+          }
+          if (stop.getTime() < nextStart.getTime()) {
+            programmes.splice(i, 0, createDummyData(stop, nextStart));
+            i++;
+          }
         }
         var currentTime = new Date(programmes[0].stop);
         if (typeof nextReloadTime === 'undefined'
@@ -101,7 +110,7 @@
           var remoconNumber = channels[key][0].remocon_number;
           var th = document.createElement('th');
           th.classList.add(remoconNumber);
-	  th.classList.add('mdl-data-table__cell--non-numeric');
+          th.classList.add('mdl-data-table__cell--non-numeric');
           th.setAttribute('width', width);
           var anchor = document.createElement('a');
           anchor.textContent = key;
@@ -134,8 +143,12 @@
               if ((i == 0 && j == 0) || i == pos) {
                 var td = document.createElement('td');
                 td.classList.add(remoconNumber);
-	        td.classList.add('mdl-data-table__cell--non-numeric');
-                td.textContent = [formatDate(start), programme.title].join(' ');
+                td.classList.add('mdl-data-table__cell--non-numeric');
+                var strong = document.createElement('strong');
+                strong.textContent = formatDate(start);
+                td.appendChild(strong);
+                var text = document.createTextNode(' ' + programme.title);
+                td.appendChild(text);
                 td.setAttribute('valign', 'top');
                 td.setAttribute('rowspan', height);
                 tr.appendChild(td);

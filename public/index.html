@@ -9,6 +9,10 @@
 <script src="https://storage.googleapis.com/code.getmdl.io/1.0.6/material.min.js"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 <style type="text/css">
+table {
+  table-layout: fixed;
+  width: 100%;
+}
 .selected {
   background-color: #FEF;
 }
@@ -17,12 +21,13 @@
   position: static;
   white-space: normal;
   border-left: 1px solid rgba(0,0,0,.12);
+  padding: 12px;
 }
 .mdl-data-table th {
   border-top: 0px;
 }
-.mdl-data-table td {
-  padding-bottom: 12px;
+.mdl-data-table td:first-of-type, .mdl-data-table th:first-of-type {
+  padding-left: 12px;
 }
 </style>
 </head>

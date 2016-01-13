@@ -132,7 +132,6 @@
         });
         table.appendChild(tr);
       }
-      getCurrentChannel();
 
       var timeTics = Math.floor((actualLastDate - now) / 60000);
       for (var i = 0; i < timeTics; i++) {
@@ -174,6 +173,7 @@
         table.appendChild(tr);
       }
       timetable.appendChild(table);
+      getCurrentChannel();
 
       if (typeof nextReloadTime === 'undefined' || nextReloadTime.getTime() <= 0) {
         setTimeout(function() { updateProgrammes(); }, 5 * 60 * 1000);

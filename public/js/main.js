@@ -155,11 +155,15 @@
                 var td = document.createElement('td');
                 td.classList.add(remoconNumber);
                 td.classList.add('mdl-data-table__cell--non-numeric');
-                var strong = document.createElement('strong');
-                strong.textContent = formatDate(start);
-                td.appendChild(strong);
-                var text = document.createTextNode(' ' + programme.title);
-                td.appendChild(text);
+                if (programme.title == "NO DATA") {
+                  td.classList.add('empty');
+                } else {
+                  var strong = document.createElement('strong');
+                  strong.textContent = formatDate(start);
+                  td.appendChild(strong);
+                  var text = document.createTextNode(' ' + programme.title);
+                  td.appendChild(text);
+                }
                 td.setAttribute('valign', 'top');
                 td.setAttribute('rowspan', height);
                 tr.appendChild(td);

@@ -71,12 +71,14 @@
       var table = document.createElement('table');
       table.className = 'mdl-data-table';
       var channels = {};
+      var remoconNumbers = {};
       programmes.forEach(function(programme) {
         var start = new Date(programme.start);
         var stop = new Date(programme.stop);
         if (now < stop && start < lastDate) {
           if (typeof channels[programme.name] === 'undefined') {
             channels[programme.name] = [];
+            remoconNumbers[programme.name] = programme.remocon_number;
           }
           if (actualLastDate < stop) {
             actualLastDate = stop;
@@ -117,14 +119,13 @@
         var tr = document.createElement('tr');
         var width = (100 / Object.keys(channels).length) + '%';
         Object.keys(channels).forEach(function(key) {
-          var remoconNumber = channels[key][0].remocon_number;
           var th = document.createElement('th');
-          th.classList.add(remoconNumber);
+          th.classList.add(remoconNumbers[key]);
           th.classList.add('mdl-data-table__cell--non-numeric');
           th.setAttribute('width', width);
           var anchor = document.createElement('a');
           anchor.textContent = key;
-          anchor.id = remoconNumber;
+          anchor.id = remoconNumbers[key];
           anchor.setAttribute('href', 'javascript:void(0)');
           anchor.addEventListener('click', selectChannel);
           th.appendChild(anchor);
@@ -142,7 +143,6 @@
             var start = new Date(programme.start);
             var stop = new Date(programme.stop);
             var pos = Math.floor((start - now) / 60000);
-            var remoconNumber = channels[key][0].remocon_number;
             var height;
             if (i == pos) {
               height = Math.floor((stop - start) / 60000);
@@ -152,7 +152,7 @@
             if (height > 0) {
               if ((i == 0 && j == 0) || i == pos) {
                 var td = document.createElement('td');
-                td.classList.add(remoconNumber);
+                td.classList.add(remoconNumbers[key]);
                 td.classList.add('mdl-data-table__cell--non-numeric');
                 if (programme.title == "NO DATA") {
                   td.classList.add('empty');

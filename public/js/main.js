@@ -65,35 +65,45 @@
         timetable.removeChild(timetable.firstChild);
       }
       var now = new Date();
+      now.setSeconds(0, 0);
       var lastDate = new Date(now.getTime() + 6 * 60 * 60 * 1000);
+      var actualLastDate = now;
       var table = document.createElement('table');
       table.className = 'mdl-data-table';
       var channels = {};
       programmes.forEach(function(programme) {
         var start = new Date(programme.start);
         var stop = new Date(programme.stop);
-        if (typeof channels[programme.name] === 'undefined') {
-          channels[programme.name] = [];
-          if (start.getTime() > now.getTime()) {
-            channels[programme.name].push(createDummyData(now, start));
+        if (now < stop && start < lastDate) {
+          if (typeof channels[programme.name] === 'undefined') {
+            channels[programme.name] = [];
           }
+          if (actualLastDate < stop) {
+            actualLastDate = stop;
+          }
+          channels[programme.name].push(programme);
         }
-        channels[programme.name].push(programme);
       });
       var nextReloadTime;
       Object.keys(channels).forEach(function(key) {
         var programmes = channels[key];
-        for (var i = 0; i < programmes.length; i++) {
+        // head padding : Note that programmes.length is always non-zero.
+        var firstProgrammeStart = new Date(programmes[0].start);
+        if (firstProgrammeStart > now) {
+          programmes.unshift(createDummyData(now, firstProgrammeStart));
+        }
+        // tail padding
+        var lastProgrammeStop = new Date(programmes[programmes.length - 1].stop);
+        if (actualLastDate > lastProgrammeStop) {
+          programmes.push(createDummyData(lastProgrammeStop, actualLastDate));
+        }
+        // body padding
+        for (var i = 0; i < programmes.length - 1; i++) {
           var programme = programmes[i];
           var stop = new Date(programme.stop);
-          var nextStart;
-          if ((i + 1) < programmes.length) {
-            nextStart = new Date(programmes[i + 1].start);
-          } else {
-            nextStart = new Date(lastDate);
-          }
-          if (stop.getTime() < nextStart.getTime()) {
-            programmes.splice(i, 0, createDummyData(stop, nextStart));
+          var nextStart = new Date(programmes[i + 1].start);
+          if (stop < nextStart) {
+            programmes.splice(i + 1, 0, createDummyData(stop, nextStart));
             i++;
           }
         }
@@ -124,7 +134,8 @@
       }
       getCurrentChannel();
 
-      for (var i = 0; i < 6 * 60; i++) {
+      var timeTics = Math.floor((actualLastDate - now) / 60000);
+      for (var i = 0; i < timeTics; i++) {
         var tr = document.createElement('tr');
         Object.keys(channels).forEach(function(key) {
           for (var j = 0; j < channels[key].length; j++) {

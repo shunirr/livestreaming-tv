@@ -59,7 +59,7 @@
       var now = new Date();
       var lastDate = new Date(now.getTime() + 6 * 60 * 60 * 1000);
       var table = document.createElement('table');
-      table.setAttribute('border', '1');
+      table.className = 'mdl-data-table';
       var channels = {};
       programmes.forEach(function(programme) {
         var start = new Date(programme.start);
@@ -100,7 +100,8 @@
         Object.keys(channels).forEach(function(key) {
           var remoconNumber = channels[key][0].remocon_number;
           var th = document.createElement('th');
-          th.className = remoconNumber;
+          th.classList.add(remoconNumber);
+	  th.classList.add('mdl-data-table__cell--non-numeric');
           th.setAttribute('width', width);
           var anchor = document.createElement('a');
           anchor.textContent = key;
@@ -132,8 +133,9 @@
             if (height > 0) {
               if ((i == 0 && j == 0) || i == pos) {
                 var td = document.createElement('td');
-                td.className = remoconNumber;
-                td.innerHTML = [formatDate(start) + '-' + formatDate(stop), programme.title].join('<br>');
+                td.classList.add(remoconNumber);
+	        td.classList.add('mdl-data-table__cell--non-numeric');
+                td.textContent = [formatDate(start), programme.title].join(' ');
                 td.setAttribute('valign', 'top');
                 td.setAttribute('rowspan', height);
                 tr.appendChild(td);

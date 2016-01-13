@@ -49,7 +49,9 @@
     return {
       'start': start,
       'stop': stop,
-      'title':'NO DATA'
+      'title': 'NO DATA',
+      'startObj': new Date(start),
+      'stopObj': new Date(stop),
     };
   }
 
@@ -74,7 +76,9 @@
       programmes.forEach(function(programme) {
         var start = new Date(programme.start);
         var stop = new Date(programme.stop);
-        if (now < stop && start < lastDate) {
+        start.setSeconds(0, 0);
+        stop.setSeconds(0, 0);
+        if (now < stop && start < lastDate && start < stop) { // to ensure 'height' > 0
           if (typeof channels[programme.name] === 'undefined') {
             channels[programme.name] = [];
             remoconNumbers[programme.name] = programme.remocon_number;
@@ -82,6 +86,8 @@
           if (actualLastDate < stop) {
             actualLastDate = stop;
           }
+          programme.startObj = start;
+          programme.stopObj = stop;
           channels[programme.name].push(programme);
         }
       });
@@ -90,26 +96,26 @@
       Object.keys(channels).forEach(function(key) {
         var programmes = channels[key];
         // head padding : Note that programmes.length is always non-zero.
-        var firstProgrammeStart = new Date(programmes[0].start);
+        var firstProgrammeStart = programmes[0].startObj;
         if (firstProgrammeStart > now) {
           programmes.unshift(createDummyData(now, firstProgrammeStart));
         }
         // tail padding
-        var lastProgrammeStop = new Date(programmes[programmes.length - 1].stop);
+        var lastProgrammeStop = programmes[programmes.length - 1].stopObj;
         if (actualLastDate > lastProgrammeStop) {
           programmes.push(createDummyData(lastProgrammeStop, actualLastDate));
         }
         // body padding
         for (var i = 0; i < programmes.length - 1; i++) {
           var programme = programmes[i];
-          var stop = new Date(programme.stop);
-          var nextStart = new Date(programmes[i + 1].start);
+          var stop = programme.stopObj;
+          var nextStart = programmes[i + 1].startObj;
           if (stop < nextStart) {
             programmes.splice(i + 1, 0, createDummyData(stop, nextStart));
             i++;
           }
         }
-        var firstProgrammeStop = new Date(programmes[0].stop);
+        var firstProgrammeStop = programmes[0].stopObj;
         if (typeof nextReloadTime === 'undefined'
               || nextReloadTime > firstProgrammeStop) {
           nextReloadTime = firstProgrammeStop;
@@ -137,39 +143,41 @@
         table.appendChild(tr);
       }
 
+      Object.keys(channels).forEach(function(key) {
+        channels[key].forEach(function(programme) {
+          var start = programme.startObj;
+          if (start < now) {
+            start = now;
+          }
+          programme.pos = Math.floor((start - now) / 60000);
+          programme.height = Math.floor((programme.stopObj - start) / 60000);
+        });
+      });
+
       var timeTics = Math.floor((actualLastDate - now) / 60000);
       for (var i = 0; i < timeTics; i++) {
         var tr = document.createElement('tr');
         Object.keys(channels).forEach(function(key) {
           for (var j = 0; j < channels[key].length; j++) {
             var programme = channels[key][j];
-            var start = new Date(programme.start);
-            var stop = new Date(programme.stop);
-            var pos = Math.floor((start - now) / 60000);
-            var height;
-            if (i == pos) {
-              height = Math.floor((stop - start) / 60000);
-            } else {
-              height = Math.floor((stop - now) / 60000);
-            }
-            if (height > 0) {
-              if ((i == 0 && j == 0) || i == pos) {
-                var td = document.createElement('td');
-                td.classList.add(remoconNumbers[key]);
-                td.classList.add('mdl-data-table__cell--non-numeric');
-                if (programme.title == "NO DATA") {
-                  td.classList.add('empty');
-                } else {
-                  var strong = document.createElement('strong');
-                  strong.textContent = formatDate(start);
-                  td.appendChild(strong);
-                  var text = document.createTextNode(' ' + programme.title);
-                  td.appendChild(text);
-                }
-                td.setAttribute('valign', 'top');
-                td.setAttribute('rowspan', height);
-                tr.appendChild(td);
+            if (i == programme.pos) {
+              var td = document.createElement('td');
+              td.classList.add(remoconNumbers[key]);
+              td.classList.add('mdl-data-table__cell--non-numeric');
+              if (programme.title == "NO DATA") {
+                td.classList.add('empty');
+              } else {
+                var strong = document.createElement('strong');
+                strong.textContent = formatDate(programme.startObj);
+                td.appendChild(strong);
+                var text = document.createTextNode(' ' + programme.title);
+                td.appendChild(text);
               }
+              td.setAttribute('valign', 'top');
+              td.setAttribute('rowspan', programme.height);
+              tr.appendChild(td);
+              programmes.splice(i, 1);
+              return;
             }
           };
         });
@@ -181,7 +189,7 @@
       if (typeof nextReloadTime === 'undefined' || nextReloadTime.getTime() <= 0) {
         setTimeout(function() { updateProgrammes(); }, 5 * 60 * 1000);
       } else {
-        setTimeout(function() { updateProgrammes(); }, (nextReloadTime - now));
+        setTimeout(function() { updateProgrammes(); }, (nextReloadTime - (new Date())));
       }
     });
   }

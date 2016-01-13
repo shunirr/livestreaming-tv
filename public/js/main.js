@@ -143,53 +143,52 @@
         table.appendChild(tr);
       }
 
+      var timetableRows = new Array(Math.floor((actualLastDate - now) / 60000));
+      for (var i = 0; i < timetableRows.length; i++) {
+        timetableRows[i] = [];
+      }
       Object.keys(channels).forEach(function(key) {
         channels[key].forEach(function(programme) {
           var start = programme.startObj;
           if (start < now) {
             start = now;
           }
-          programme.pos = Math.floor((start - now) / 60000);
+          var pos = Math.floor((start - now) / 60000);
           programme.height = Math.floor((programme.stopObj - start) / 60000);
+          if (0 <= pos && pos < timetableRows.length) { // failsafe
+            timetableRows[pos].push(programme);
+          }
         });
       });
-
-      var timeTics = Math.floor((actualLastDate - now) / 60000);
-      for (var i = 0; i < timeTics; i++) {
+      for (var i = 0; i < timetableRows.length; i++) {
         var tr = document.createElement('tr');
-        Object.keys(channels).forEach(function(key) {
-          for (var j = 0; j < channels[key].length; j++) {
-            var programme = channels[key][j];
-            if (i == programme.pos) {
-              var td = document.createElement('td');
-              td.classList.add(remoconNumbers[key]);
-              td.classList.add('mdl-data-table__cell--non-numeric');
-              if (programme.title == "NO DATA") {
-                td.classList.add('empty');
-              } else {
-                var strong = document.createElement('strong');
-                strong.textContent = formatDate(programme.startObj);
-                td.appendChild(strong);
-                var text = document.createTextNode(' ' + programme.title);
-                td.appendChild(text);
-              }
-              td.setAttribute('valign', 'top');
-              td.setAttribute('rowspan', programme.height);
-              tr.appendChild(td);
-              programmes.splice(i, 1);
-              return;
-            }
-          };
+        timetableRows[i].forEach(function(programme) {
+          var td = document.createElement('td');
+          td.classList.add(programme.remocon_number);
+          td.classList.add('mdl-data-table__cell--non-numeric');
+          if (programme.title == "NO DATA") {
+            td.classList.add('empty');
+          } else {
+            var strong = document.createElement('strong');
+            strong.textContent = formatDate(programme.startObj);
+            td.appendChild(strong);
+            var text = document.createTextNode(' ' + programme.title);
+            td.appendChild(text);
+          }
+          td.setAttribute('valign', 'top');
+          td.setAttribute('rowspan', programme.height);
+          tr.appendChild(td);
         });
         table.appendChild(tr);
       }
       timetable.appendChild(table);
       getCurrentChannel();
 
-      if (typeof nextReloadTime === 'undefined' || nextReloadTime.getTime() <= 0) {
+      now = new Date(); // without setSeconds(0, 0)
+      if (typeof nextReloadTime === 'undefined' || nextReloadTime - now <= 0) {
         setTimeout(function() { updateProgrammes(); }, 5 * 60 * 1000);
       } else {
-        setTimeout(function() { updateProgrammes(); }, (nextReloadTime - (new Date())));
+        setTimeout(function() { updateProgrammes(); }, nextReloadTime - now);
       }
     });
   }

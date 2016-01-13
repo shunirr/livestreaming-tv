@@ -140,7 +140,7 @@
       }
       timetable.appendChild(table);
 
-      setTimeout(function() { updateProgrammes(); }, 30 * 60 * 1000);
+      setTimeout(function() { updateProgrammes(); }, 5 * 60 * 1000);
     });
   }
 

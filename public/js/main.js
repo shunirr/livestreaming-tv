@@ -13,9 +13,20 @@
     return date.getHours() + ':' + ('0' + date.getMinutes()).substr(-2);
   }
 
+  function selectChannelViews(ch) {
+    var elements = document.getElementsByClassName('selected');
+    while (elements[0]) {
+      elements[0].classList.remove('selected');
+    }
+    Array.prototype.forEach.call(document.getElementsByClassName(ch), function(element) {
+      element.classList.add('selected');
+    });
+  }
+
   function selectChannel(event) {
     var ch = event.target.getAttribute('id');
     var body = new FormData();
+    selectChannelViews(ch);
     body.append('ch', ch);
     fetch('channels/select', {
       method: 'post',
@@ -34,13 +45,7 @@
       credentials: 'same-origin',
       cache: 'no-store'
     }).then(parseJson).then(function(json) {
-      var elements = document.getElementsByClassName('selected');
-      while (elements[0]) {
-        elements[0].classList.remove('selected');
-      }
-      Array.prototype.forEach.call(document.getElementsByClassName(json[1]), function(element) {
-        element.classList.add('selected');
-      });
+      selectChannelViews(json[1]);
       timeoutID = setTimeout(function() { getCurrentChannel(); }, 60 * 1000);
     });
   }

@@ -49,7 +49,9 @@
     return {
       'start': start,
       'stop': stop,
-      'title':'NO DATA'
+      'title': 'NO DATA',
+      'startObj': new Date(start),
+      'stopObj': new Date(stop),
     };
   }
 
@@ -65,56 +67,74 @@
         timetable.removeChild(timetable.firstChild);
       }
       var now = new Date();
+      now.setSeconds(0, 0);
       var lastDate = new Date(now.getTime() + 6 * 60 * 60 * 1000);
-      var table = document.createElement('table');
-      table.className = 'mdl-data-table';
+
+      var actualLastDate = now;
       var channels = {};
+      var remoconNumbers = {};
       programmes.forEach(function(programme) {
         var start = new Date(programme.start);
         var stop = new Date(programme.stop);
-        if (typeof channels[programme.name] === 'undefined') {
-          channels[programme.name] = [];
-          if (start.getTime() > now.getTime()) {
-            channels[programme.name].push(createDummyData(now, start));
+        start.setSeconds(0, 0);
+        stop.setSeconds(0, 0);
+        if (now < stop && start < lastDate && start < stop) { // to ensure 'height' > 0
+          if (typeof channels[programme.name] === 'undefined') {
+            channels[programme.name] = [];
+            remoconNumbers[programme.name] = programme.remocon_number;
           }
+          if (actualLastDate < stop) {
+            actualLastDate = stop;
+          }
+          programme.startObj = start;
+          programme.stopObj = stop;
+          channels[programme.name].push(programme);
         }
-        channels[programme.name].push(programme);
       });
+
       var nextReloadTime;
       Object.keys(channels).forEach(function(key) {
         var programmes = channels[key];
-        for (var i = 0; i < programmes.length; i++) {
+        // head padding : Note that programmes.length is always non-zero.
+        var firstProgrammeStart = programmes[0].startObj;
+        if (firstProgrammeStart > now) {
+          programmes.unshift(createDummyData(now, firstProgrammeStart));
+        }
+        // tail padding
+        var lastProgrammeStop = programmes[programmes.length - 1].stopObj;
+        if (actualLastDate > lastProgrammeStop) {
+          programmes.push(createDummyData(lastProgrammeStop, actualLastDate));
+        }
+        // body padding
+        for (var i = 0; i < programmes.length - 1; i++) {
           var programme = programmes[i];
-          var stop = new Date(programme.stop);
-          var nextStart;
-          if ((i + 1) < programmes.length) {
-            nextStart = new Date(programmes[i + 1].start);
-          } else {
-            nextStart = new Date(lastDate);
-          }
-          if (stop.getTime() < nextStart.getTime()) {
-            programmes.splice(i, 0, createDummyData(stop, nextStart));
+          var stop = programme.stopObj;
+          var nextStart = programmes[i + 1].startObj;
+          if (stop < nextStart) {
+            programmes.splice(i + 1, 0, createDummyData(stop, nextStart));
             i++;
           }
         }
-        var currentTime = new Date(programmes[0].stop);
+        var firstProgrammeStop = programmes[0].stopObj;
         if (typeof nextReloadTime === 'undefined'
-              || nextReloadTime.getTime() > currentTime.getTime()) {
-          nextReloadTime = currentTime;
+              || nextReloadTime > firstProgrammeStop) {
+          nextReloadTime = firstProgrammeStop;
         }
       });
+
+      var table = document.createElement('table');
+      table.className = 'mdl-data-table';
       {
         var tr = document.createElement('tr');
         var width = (100 / Object.keys(channels).length) + '%';
         Object.keys(channels).forEach(function(key) {
-          var remoconNumber = channels[key][0].remocon_number;
           var th = document.createElement('th');
-          th.classList.add(remoconNumber);
+          th.classList.add(remoconNumbers[key]);
           th.classList.add('mdl-data-table__cell--non-numeric');
           th.setAttribute('width', width);
           var anchor = document.createElement('a');
           anchor.textContent = key;
-          anchor.id = remoconNumber;
+          anchor.id = remoconNumbers[key];
           anchor.setAttribute('href', 'javascript:void(0)');
           anchor.addEventListener('click', selectChannel);
           th.appendChild(anchor);
@@ -122,48 +142,53 @@
         });
         table.appendChild(tr);
       }
-      getCurrentChannel();
 
-      for (var i = 0; i < 6 * 60; i++) {
+      var timetableRows = new Array(Math.floor((actualLastDate - now) / 60000));
+      for (var i = 0; i < timetableRows.length; i++) {
+        timetableRows[i] = [];
+      }
+      Object.keys(channels).forEach(function(key) {
+        channels[key].forEach(function(programme) {
+          var start = programme.startObj;
+          if (start < now) {
+            start = now;
+          }
+          var pos = Math.floor((start - now) / 60000);
+          programme.height = Math.floor((programme.stopObj - start) / 60000);
+          if (0 <= pos && pos < timetableRows.length) { // failsafe
+            timetableRows[pos].push(programme);
+          }
+        });
+      });
+      for (var i = 0; i < timetableRows.length; i++) {
         var tr = document.createElement('tr');
-        Object.keys(channels).forEach(function(key) {
-          for (var j = 0; j < channels[key].length; j++) {
-            var programme = channels[key][j];
-            var start = new Date(programme.start);
-            var stop = new Date(programme.stop);
-            var pos = Math.floor((start - now) / 60000);
-            var remoconNumber = channels[key][0].remocon_number;
-            var height;
-            if (i == pos) {
-              height = Math.floor((stop - start) / 60000);
-            } else {
-              height = Math.floor((stop - now) / 60000);
-            }
-            if (height > 0) {
-              if ((i == 0 && j == 0) || i == pos) {
-                var td = document.createElement('td');
-                td.classList.add(remoconNumber);
-                td.classList.add('mdl-data-table__cell--non-numeric');
-                var strong = document.createElement('strong');
-                strong.textContent = formatDate(start);
-                td.appendChild(strong);
-                var text = document.createTextNode(' ' + programme.title);
-                td.appendChild(text);
-                td.setAttribute('valign', 'top');
-                td.setAttribute('rowspan', height);
-                tr.appendChild(td);
-              }
-            }
-          };
+        timetableRows[i].forEach(function(programme) {
+          var td = document.createElement('td');
+          td.classList.add(programme.remocon_number);
+          td.classList.add('mdl-data-table__cell--non-numeric');
+          if (programme.title == "NO DATA") {
+            td.classList.add('empty');
+          } else {
+            var strong = document.createElement('strong');
+            strong.textContent = formatDate(programme.startObj);
+            td.appendChild(strong);
+            var text = document.createTextNode(' ' + programme.title);
+            td.appendChild(text);
+          }
+          td.setAttribute('valign', 'top');
+          td.setAttribute('rowspan', programme.height);
+          tr.appendChild(td);
         });
         table.appendChild(tr);
       }
       timetable.appendChild(table);
+      getCurrentChannel();
 
-      if (typeof nextReloadTime === 'undefined' || nextReloadTime.getTime() <= 0) {
+      now = new Date(); // without setSeconds(0, 0)
+      if (typeof nextReloadTime === 'undefined' || nextReloadTime - now <= 0) {
         setTimeout(function() { updateProgrammes(); }, 5 * 60 * 1000);
       } else {
-        setTimeout(function() { updateProgrammes(); }, (nextReloadTime - now));
+        setTimeout(function() { updateProgrammes(); }, nextReloadTime - now);
       }
     });
   }

@@ -4,6 +4,7 @@ require 'twitter'
 require 'tempfile'
 require 'yaml'
 require 'active_support'
+require 'time'
 
 module LiveStreamingTV
   class Controller < Sinatra::Base
@@ -44,13 +45,18 @@ module LiveStreamingTV
 
     get '/programmes' do
       content_type :json
+      begin
+        t = Time.parse(params[:t])
+      rescue
+        t = Time.now
+      end
       LiveStreamingTV::Model::Programme
         .joins('INNER JOIN channels ON programmes.channel = channels.channel_id')
         .joins('INNER JOIN ch2s ON channels.service_id = ch2s.service_id')
         .select('programmes.*, channels.tp, ch2s.name, ch2s.remocon_number')
-        .where('stop > ? AND stop < ?', Time.now, 6.hours.since)
-	.order('channels.tp, programmes.start')
-	.to_json
+        .where('stop > ? AND stop < ?', t, t.since(6.hours))
+        .order('channels.tp, programmes.start')
+        .to_json
     end
 
     post '/channels/select' do

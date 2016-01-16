@@ -15,13 +15,18 @@ EPGDUMP_PATH = 'C:/tv/epgdump/epgdump.exe'
 config = YAML.load(File.open('config/database.yaml'))
 ActiveRecord::Base.establish_connection(config)
 
+def format(str)
+  return if str.nil?
+  str.tr("０-９Ａ-Ｚａ-ｚ　", "0-9A-Za-z ").gsub(/【.】/, '')
+end
+
 def import_epg(doc)
   doc.elements.each('tv/channel') do |channel|
     ch = LiveStreamingTV::Model::Channel.find_or_initialize_by(
       channel_id: channel.attributes['id']
     )
     ch.tp = channel.attributes['tp'].to_i
-    ch.display_name = channel.elements['display-name'].text
+    ch.display_name = format(channel.elements['display-name'].text)
     ch.transport_stream_id = channel.elements['transport_stream_id'].text.to_i
     ch.original_network_id = channel.elements['original_network_id'].text.to_i
     ch.service_id = channel.elements['service_id'].text.to_i
@@ -35,8 +40,8 @@ def import_epg(doc)
     pr.start = DateTime.parse programme.attributes['start']
     pr.stop = DateTime.parse programme.attributes['stop']
     pr.channel = programme.attributes['channel']
-    pr.title = programme.elements['title'].text
-    pr.desc = programme.elements['desc'].text
+    pr.title = format(programme.elements['title'].text)
+    pr.desc = format(programme.elements['desc'].text)
     pr.category = programme.elements['category'].text
     pr.save
   end

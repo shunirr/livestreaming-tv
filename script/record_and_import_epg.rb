@@ -27,7 +27,7 @@ def import_epg(doc)
     ch.service_id = channel.elements['service_id'].text.to_i
     ch.save
   end
-  
+
   doc.elements.each('tv/programme') do |programme|
     pr = LiveStreamingTV::Model::Programme.find_or_initialize_by(
       event_id: programme.attributes['event_id'].to_i
@@ -49,6 +49,8 @@ Dir.glob(File.join(RECTEST_RECORD_PATH, "*.xml")) do |file|
   File.delete file
 end
 
+LiveStreamingTV::Model::Channel.delete_all
+LiveStreamingTV::Model::Programme.delete_all
 LiveStreamingTV::Model::Ch2.all.each do |ch2|
   ts  = File.join(RECTEST_RECORD_PATH,
                   "#{ch2.tuning_space}-#{ch2.remocon_number}.ts")
@@ -56,12 +58,12 @@ LiveStreamingTV::Model::Ch2.all.each do |ch2|
                   "#{ch2.tuning_space}-#{ch2.remocon_number}.xml")
   system(RECTEST_PATH,
          '/d', BONDRIVER_PATH,
-	 '/chspace', "#{ch2.tuning_space}",
+         '/chspace', "#{ch2.tuning_space}",
          '/rch', "#{ch2.channel_number}",
-	 '/rec', 
-	 '/recduration', '10',
-	 '/recexit',
-	 '/recfile', ts)
+         '/rec',
+         '/recduration', '10',
+         '/recexit',
+         '/recfile', ts)
   system(EPGDUMP_PATH, "#{ch2.channel_number}", ts, xml)
   import_epg(REXML::Document.new(open(xml)))
 end

@@ -175,6 +175,7 @@
       anchor.textContent = channelName;
       anchor.id = 'remocon-number-' + remoconNumber;
       anchor.dataset.remoconNumber = remoconNumber;
+      anchor.href = 'javascript:void(0);';
       anchor.addEventListener('click', selectChannel);
       th.appendChild(anchor);
       tr.appendChild(th);

@@ -16,6 +16,9 @@ table {
 .selected {
   background-color: #FEF;
 }
+.mdl-data-table tbody tr {
+  height: 10px;
+}
 .mdl-data-table th,
 .mdl-data-table td {
   position: static;
@@ -29,10 +32,19 @@ table {
 .mdl-data-table th {
   border-top: 0px;
 }
-.mdl-data-table td:first-of-type, .mdl-data-table th:first-of-type {
+.mdl-data-table th,
+.mdl-data-table th:first-of-type,
+.mdl-data-table th:last-of-type  {
+  padding: 0;
+}
+.mdl-data-table th a {
+  display: block;
+  padding: 12px;
+}
+.mdl-data-table td:first-of-type {
   padding-left: 12px;
 }
-.mdl-data-table td:last-of-type, .mdl-data-table th:last-of-type {
+.mdl-data-table td:last-of-type {
   padding-right: 12px;
 }
 </style>

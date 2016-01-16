@@ -3,7 +3,8 @@
 
   var videoSrc = 'hls/stream.m3u8';
   var remoconNumbers = {};
-  var channelNames;
+  var channelIds;
+  var channelNames = {};
   var video;
   var timetable;
   var timeoutID;
@@ -105,18 +106,19 @@
       if (now >= stop || start >= lastDate || start >= stop) {
         return;
       }
-      channels[programme.name] = channels[programme.name] || [];
-      remoconNumbers[programme.name] = remoconNumbers[programme.name] || programme.remocon_number;
+      channels[programme.channel] = channels[programme.channel] || [];
+      channelNames[programme.channel] = programme.name;
+      remoconNumbers[programme.channel] = remoconNumbers[programme.channel] || programme.remocon_number;
       if (actualLastDate < stop) {
         actualLastDate = stop;
       }
       programme.startObj = start;
       programme.stopObj = stop;
-      channels[programme.name].push(programme);
+      channels[programme.channel].push(programme);
     });
-    channelNames = Object.keys(channels);
-    channelNames.forEach(function(channelName) {
-      var programmes = channels[channelName];
+    channelIds = Object.keys(channels);
+    channelIds.forEach(function(channelId) {
+      var programmes = channels[channelId];
       // head padding : Note that programmes.length is always non-zero.
       var firstProgrammeStart = programmes[0].startObj;
       if (firstProgrammeStart > now) {
@@ -164,15 +166,15 @@
   function generateTableHeader(channels) {
     var thead = document.createElement('thead');
     var tr = document.createElement('tr');
-    var width = (100 / channelNames.length) + '%';
-    channelNames.forEach(function(channelName) {
-      var remoconNumber = remoconNumbers[channelName];
+    var width = (100 / channelIds.length) + '%';
+    channelIds.forEach(function(channelId) {
+      var remoconNumber = remoconNumbers[channelId];
       var th = document.createElement('th');
       th.classList.add('remocon-number-' + remoconNumber);
       th.classList.add('mdl-data-table__cell--non-numeric');
       th.setAttribute('width', width);
       var anchor = document.createElement('a');
-      anchor.textContent = channelName;
+      anchor.textContent = channelNames[channelId];
       anchor.id = 'remocon-number-' + remoconNumber;
       anchor.dataset.remoconNumber = remoconNumber;
       anchor.href = 'javascript:void(0);';
@@ -192,8 +194,8 @@
     for (i = 0, len = timetableRows.length; i < len; ++i) {
       timetableRows[i] = [];
     }
-    channelNames.forEach(function(channelName) {
-      var programmes = channels[channelName];
+    channelIds.forEach(function(channelId) {
+      var programmes = channels[channelId];
       programmes.forEach(function(programme) {
         var start = programme.startObj;
         if (start < now) {
@@ -222,7 +224,7 @@
           strong = document.createElement('strong');
           strong.textContent = formatDate(programme.startObj);
           td.appendChild(strong);
-          text = document.createTextNode(' ' + programme.title + ' [' + programme.category + ']');
+          text = document.createTextNode(' ' + programme.title);
           td.appendChild(text);
         }
         td.setAttribute('valign', 'top');

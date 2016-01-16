@@ -52,10 +52,10 @@ module LiveStreamingTV
       end
       LiveStreamingTV::Model::Programme
         .joins('INNER JOIN channels ON programmes.channel = channels.channel_id')
-        .joins('INNER JOIN ch2s ON channels.service_id = ch2s.service_id')
-        .select('programmes.*, channels.tp, ch2s.name, ch2s.remocon_number')
-        .where('stop > ? AND stop < ?', t, t.since(6.hours))
-        .order('channels.tp, programmes.start')
+        .joins('INNER JOIN ch2s ON channels.tp = ch2s.channel_number')
+        .select('programmes.*, channels.tp, channels.display_name, ch2s.name, ch2s.remocon_number')
+        .where('stop > ? AND stop < ?', t.beginning_of_hour, t.since(6.hours))
+        .order('channels.service_id, programmes.start')
         .to_json
     end
 

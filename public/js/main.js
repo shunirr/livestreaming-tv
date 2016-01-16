@@ -130,14 +130,13 @@
         programmes.push(createDummyData(lastProgrammeStop, actualLastDate));
       }
       // body padding
-      var i, len, stop, nextStart;
-      for (i = 0, len = programmes.length; i < len; ++i) {
-        stop = programmes[i].stopObj;
-        nextStart = programmes[i + 1].startObj;
-        if (stop >= nextStart) {
-          break;
+      var i, len;
+      for (i = 1, len = programmes.length; i < len; ++i) {
+        if (programmes[i - 1].stopObj < programmes[i].startObj) {
+          programmes.splice(i, 0, createDummyData(programmes[i - 1].stopObj, programmes[i].startObj));
+          i++;
+          len++;
         }
-        programmes.splice(++i, 0, createDummyData(stop, nextStart));
       }
       var firstProgrammeStop = programmes[0].stopObj;
       if ((nextReloadTime || 0) <= firstProgrammeStop) {

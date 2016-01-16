@@ -14,20 +14,22 @@ table {
   width: 100%;
 }
 .selected {
-  background-color: #FEF;
+  background-color: #fef;
 }
 .mdl-data-table tbody tr {
   height: 0px;
 }
 .mdl-data-table th,
-.mdl-data-table td {
+.mdl-data-table td,
+.mdl-data-table td:first-of-type,
+.mdl-data-table td:last-of-type {
   position: static;
   white-space: normal;
   border-left: 1px solid rgba(0,0,0,.12);
   padding: 12px;
 }
 .mdl-data-table td.empty {
-  background-color: rgba(0,0,0,.12);
+  background-color: #eee;
 }
 .mdl-data-table th {
   border-top: 0px;
@@ -41,11 +43,8 @@ table {
   display: block;
   padding: 12px;
 }
-.mdl-data-table td:first-of-type {
-  padding-left: 12px;
-}
-.mdl-data-table td:last-of-type {
-  padding-right: 12px;
+.mdl-data-table tbody tr:hover {
+  background-color: initial;
 }
 </style>
 </head>

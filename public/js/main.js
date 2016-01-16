@@ -10,7 +10,6 @@
   var timeoutID;
   var now;
   var actualLastDate;
-  var nextReloadTime;
 
   function parseJson(response) {
     return response.json();
@@ -89,7 +88,6 @@
   }
 
   function generateTimetable(programmes) {
-    nextReloadTime = undefined;
     timetable = timetable || document.getElementById('timetable');
     removeChildren(timetable);
     now = new Date();
@@ -138,20 +136,21 @@
           len++;
         }
       }
-      var firstProgrammeStop = programmes[0].stopObj;
-      if ((nextReloadTime || 0) <= firstProgrammeStop) {
-        return;
-      }
-      nextReloadTime = firstProgrammeStop;
     });
     timetable.appendChild(generateTable(channels));
     getCurrentChannel();
-    now = new Date(); // without setSeconds(0, 0);
-    if (!nextReloadTime || nextReloadTime - now <= 0) {
-      setTimeout(updateProgrammes, 5 * 60 * 1000);
-    } else {
-      setTimeout(updateProgrammes, nextReloadTime - now);
-    }
+    setTimeout(updateProgrammes, calculateReloadInterval(channels));
+  }
+
+  function calculateReloadInterval(channels) {
+    var nextReloadTime;
+    Object.keys(channels).forEach(function(channelId) {
+      if (!nextReloadTime || nextReloadTime > channels[channelId][0].stopObj) {
+        nextReloadTime = channels[channelId][0].stopObj;
+      }
+    });
+    var interval = nextReloadTime - (new Date());
+    return (interval > 0) ? interval : 5 * 60 * 1000;
   }
 
   function generateTable(channels) {

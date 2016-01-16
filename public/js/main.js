@@ -222,7 +222,7 @@
           strong = document.createElement('strong');
           strong.textContent = formatDate(programme.startObj);
           td.appendChild(strong);
-          text = document.createTextNode(' ' + programme.title);
+          text = document.createTextNode(' ' + programme.title + ' [' + programme.category + ']');
           td.appendChild(text);
         }
         td.setAttribute('valign', 'top');

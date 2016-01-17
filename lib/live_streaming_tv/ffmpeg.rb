@@ -1,8 +1,8 @@
 require 'open3'
 
 module LiveStreamingTV
-  attr_accessor :thread
   class FFmpeg
+    attr_accessor :thread
     def initialize(config)
       @pid = 0
       @config = config

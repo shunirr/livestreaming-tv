@@ -1,6 +1,7 @@
 require 'open3'
 
 module LiveStreamingTV
+  attr_accessor :thread
   class FFmpeg
     def initialize(config)
       @pid = 0
@@ -16,7 +17,7 @@ module LiveStreamingTV
     def start
       return if @pid > 0
 
-      Thread.start do
+      @thread = Thread.start do
         loop do
           puts "start ffmpeg"
           Open3.popen2e(@config['ffmpeg_path'],

@@ -11,10 +11,8 @@ module LiveStreamingTV
     configure do
       disable :protection
       set :config, YAML::load_file('config/config.yaml')
-      set :ffmpeg, FFmpeg.new(settings.config)
       set :controller, BonDriverController.new(settings.config)
       set :database, ActiveRecord::Base.establish_connection(YAML::load_file('config/database.yaml'))
-      settings.ffmpeg.start
 
       client = Twitter::REST::Client.new do |config|
         config.consumer_key        = ENV['CONSUMER_KEY']

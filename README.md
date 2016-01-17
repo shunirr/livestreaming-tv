@@ -16,10 +16,14 @@ LiveStreaming TV
 
 ## Usage
 
+### Setup
+
 ```sh
 bundle install --path vendor/bundle
 bundle exec rake db:migrate
 ```
+
+### Start web server
 
 ```sh
 SET CONSUMER_KEY=YOUR_TWITTER_CONSUMER_KEY
@@ -27,6 +31,19 @@ SET CONSUMER_SECRET=YOUR_TWITTER_CONSUMER_SECRET
 SET ACCESS_TOKEN=YOUR_TWITTER_ACCESS_TOKEN
 SET ACCESS_TOKEN_SECRET=YOUR_TWITTER_ACCESS_TOKEN_SECRET
 bundle exec rackup
+```
+
+### Start ffmpeg
+
+```sh
+bundle exec ruby ffmpeg.rb
+```
+
+### Import EPGs
+
+```sh
+bundle exec ruby script/record_and_import_epg.rb
+
 ```
 
 ## Sample nginx settings

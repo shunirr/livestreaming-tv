@@ -2,9 +2,6 @@
   'use strict';
 
   var videoSrc = 'hls/stream.m3u8';
-  var remoconNumbers = {};
-  var channelIds;
-  var channelNames = {};
   var video;
   var timetable;
   var timeoutID;
@@ -102,19 +99,22 @@
       if (now >= stop || start >= lastDate || start >= stop) {
         return;
       }
-      channels[programme.channel] = channels[programme.channel] || [];
-      channelNames[programme.channel] = programme.name;
-      remoconNumbers[programme.channel] = remoconNumbers[programme.channel] || programme.remocon_number;
+      if (!channels[programme.channel]) {
+        channels[programme.channel] = {
+          name: programme.name,
+          remoconNumber: programme.remocon_number,
+          programmes: [],
+        };
+      }
       if (actualLastDate < stop) {
         actualLastDate = stop;
       }
       programme.startObj = start;
       programme.stopObj = stop;
-      channels[programme.channel].push(programme);
+      channels[programme.channel].programmes.push(programme);
     });
-    channelIds = Object.keys(channels);
-    channelIds.forEach(function(channelId) {
-      var programmes = channels[channelId];
+    Object.keys(channels).forEach(function(channelId) {
+      var programmes = channels[channelId].programmes;
       // head padding : Note that programmes.length is always non-zero.
       var firstProgrammeStart = programmes[0].startObj;
       if (firstProgrammeStart > now) {
@@ -143,8 +143,8 @@
   function calculateReloadInterval(channels) {
     var nextReloadTime;
     Object.keys(channels).forEach(function(channelId) {
-      if (!nextReloadTime || nextReloadTime > channels[channelId][0].stopObj) {
-        nextReloadTime = channels[channelId][0].stopObj;
+      if (!nextReloadTime || nextReloadTime > channels[channelId].programmes[0].stopObj) {
+        nextReloadTime = channels[channelId].programmes[0].stopObj;
       }
     });
     var interval = nextReloadTime - (new Date());
@@ -160,17 +160,19 @@
   }
 
   function generateTableHeader(channels) {
+    var channelIds = Object.keys(channels);
     var thead = document.createElement('thead');
     var tr = document.createElement('tr');
     var width = (100 / channelIds.length) + '%';
     channelIds.forEach(function(channelId) {
-      var remoconNumber = remoconNumbers[channelId];
+      var channel = channels[channelId];
+      var remoconNumber = channel.remoconNumber;
       var th = document.createElement('th');
       th.classList.add('remocon-number-' + remoconNumber);
       th.classList.add('mdl-data-table__cell--non-numeric');
       th.setAttribute('width', width);
       var anchor = document.createElement('a');
-      anchor.textContent = channelNames[channelId];
+      anchor.textContent = channel.name;
       anchor.id = 'remocon-number-' + remoconNumber;
       anchor.dataset.remoconNumber = remoconNumber;
       anchor.href = 'javascript:void(0);';
@@ -202,8 +204,8 @@
     for (i = 0, len = timetableRows.length; i < len; ++i) {
       timetableRows[i] = [];
     }
-    channelIds.forEach(function(channelId) {
-      var programmes = channels[channelId];
+    Object.keys(channels).forEach(function(channelId) {
+      var programmes = channels[channelId].programmes;
       programmes.forEach(function(programme) {
         var start = programme.startObj;
         if (start < head) {

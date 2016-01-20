@@ -215,7 +215,7 @@
 
       channels[channelId].programmes.forEach(function(programme) {
         var start = (programme.startObj < head) ? head : programme.startObj;
-        var position = Math.floor((programme.startObj - head) / 60000);
+        var position = Math.floor((start - head) / 60000);
         var minutes = Math.floor((programme.stopObj - start) / 60000);
         var div = document.createElement('div');
         div.style.top = (minuteHeight * position) + "px";

@@ -13,39 +13,71 @@ table {
   table-layout: fixed;
   width: 100%;
 }
-.selected {
-  background-color: #fef;
-}
 .mdl-data-table tbody tr {
-  height: 0px;
-}
-.mdl-data-table th,
-.mdl-data-table td,
-.mdl-data-table td:first-of-type,
-.mdl-data-table td:last-of-type {
-  position: static;
-  white-space: normal;
-  border-left: 1px solid rgba(0,0,0,.12);
-  padding: 12px;
-}
-.mdl-data-table td.empty {
-  background-color: #eee;
-}
-.mdl-data-table th {
-  border-top: 0px;
-}
-.mdl-data-table th,
-.mdl-data-table th:first-of-type,
-.mdl-data-table th:last-of-type  {
-  padding: 0px;
-}
-.mdl-data-table th a {
-  display: block;
-  padding: 12px;
+  height: auto;
 }
 .mdl-data-table tbody tr:hover {
   background-color: initial;
 }
+.mdl-data-table th.mdl-data-table__cell--non-numeric,
+.mdl-data-table th:first-of-type,
+.mdl-data-table th:last-of-type  {
+  height: auto;
+  white-space: normal;
+  border-left: 1px solid rgba(0,0,0,.12);
+  text-align: center;
+  padding: 0.3em;
+}
+.mdl-data-table td,
+.mdl-data-table td:first-of-type,
+.mdl-data-table td:last-of-type {
+  padding: 0;
+  border-top: 0;
+  border-left: 1px solid rgba(0,0,0,.12);
+  border-bottom: 1px solid rgba(0,0,0,.12);
+}
+.mdl-data-table div.programme,
+.mdl-data-table div.dummy-programme {
+  position: absolute;
+  white-space: normal;
+  border-top: 1px solid rgba(0,0,0,.12);
+  vertical-align: top;
+}
+.mdl-data-table div.programme {
+  background-color: white;
+}
+
+.mdl-data-table div.dummy-programme {
+  background-color: #eee;
+}
+
+.mdl-data-table div.dummy-programme:last-of-type,
+.mdl-data-table div.programme:last-of-type {
+  border-bottom: 0;
+}
+
+.mdl-data-table div.programme span.description {
+  display: block;
+  color: gray;
+  visibility: hidden;
+  padding-top: 0.1em;
+}
+.mdl-data-table td.selected div.programme {
+  background-color: #fef;
+}
+.mdl-data-table td div.programme:hover {
+  background-color: rgb(255,200,255);
+  display: block;
+  z-index: 2;
+  overflow: visible;
+  padding-bottom: 2em;
+  border-bottom: 1px solid rgba(0,0,0,.12);
+  font-weight: bolder;
+}
+.mdl-data-table div.programme:hover span.description {
+  visibility: visible;
+}
+
 </style>
 </head>
 <body>

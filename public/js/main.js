@@ -2,9 +2,6 @@
   'use strict';
 
   var videoSrc = 'hls/stream.m3u8';
-  var remoconNumbers = {};
-  var channelIds;
-  var channelNames = {};
   var video;
   var timetable;
   var timeoutID;
@@ -22,6 +19,7 @@
       start: start,
       stop: stop,
       title: 'NO DATA',
+      desc: '',
       startObj: new Date(start),
       stopObj: new Date(stop),
       isDummy: true
@@ -102,19 +100,22 @@
       if (now >= stop || start >= lastDate || start >= stop) {
         return;
       }
-      channels[programme.channel] = channels[programme.channel] || [];
-      channelNames[programme.channel] = programme.name;
-      remoconNumbers[programme.channel] = remoconNumbers[programme.channel] || programme.remocon_number;
+      if (!channels[programme.channel]) {
+        channels[programme.channel] = {
+          name: programme.name,
+          remoconNumber: programme.remocon_number,
+          programmes: [],
+        };
+      }
       if (actualLastDate < stop) {
         actualLastDate = stop;
       }
       programme.startObj = start;
       programme.stopObj = stop;
-      channels[programme.channel].push(programme);
+      channels[programme.channel].programmes.push(programme);
     });
-    channelIds = Object.keys(channels);
-    channelIds.forEach(function(channelId) {
-      var programmes = channels[channelId];
+    Object.keys(channels).forEach(function(channelId) {
+      var programmes = channels[channelId].programmes;
       // head padding : Note that programmes.length is always non-zero.
       var firstProgrammeStart = programmes[0].startObj;
       if (firstProgrammeStart > now) {
@@ -143,8 +144,8 @@
   function calculateReloadInterval(channels) {
     var nextReloadTime;
     Object.keys(channels).forEach(function(channelId) {
-      if (!nextReloadTime || nextReloadTime > channels[channelId][0].stopObj) {
-        nextReloadTime = channels[channelId][0].stopObj;
+      if (!nextReloadTime || nextReloadTime > channels[channelId].programmes[0].stopObj) {
+        nextReloadTime = channels[channelId].programmes[0].stopObj;
       }
     });
     var interval = nextReloadTime - (new Date());
@@ -160,17 +161,19 @@
   }
 
   function generateTableHeader(channels) {
+    var channelIds = Object.keys(channels);
     var thead = document.createElement('thead');
     var tr = document.createElement('tr');
     var width = (100 / channelIds.length) + '%';
     channelIds.forEach(function(channelId) {
-      var remoconNumber = remoconNumbers[channelId];
+      var channel = channels[channelId];
+      var remoconNumber = channel.remoconNumber;
       var th = document.createElement('th');
       th.classList.add('remocon-number-' + remoconNumber);
       th.classList.add('mdl-data-table__cell--non-numeric');
       th.setAttribute('width', width);
       var anchor = document.createElement('a');
-      anchor.textContent = channelNames[channelId];
+      anchor.textContent = channel.name;
       anchor.id = 'remocon-number-' + remoconNumber;
       anchor.dataset.remoconNumber = remoconNumber;
       anchor.href = 'javascript:void(0);';
@@ -184,53 +187,46 @@
 
   function fillTd(td, programme){
     if (programme.isDummy) {
-      td.classList.add('empty');
+      td.classList.add('dummy-programme');
     } else {
+      td.classList.add('programme');
       var strong = document.createElement('strong');
       strong.textContent = formatDate(programme.startObj);
       td.appendChild(strong);
       var text = document.createTextNode(' ' + programme.title);
       td.appendChild(text);
+      var desc = document.createElement('span');
+      desc.className = "description";
+      desc.innerHTML = programme.desc;
+      td.appendChild(desc);
     }
   }
 
   function generateTableBody(channels, head, tail) {
     var tbody = document.createElement('tbody');
-    var count = Math.floor((tail - head) / 60000);
-    var timetableRows = new Array(count);
-    var i, len;
-    for (i = 0, len = timetableRows.length; i < len; ++i) {
-      timetableRows[i] = [];
-    }
-    channelIds.forEach(function(channelId) {
-      var programmes = channels[channelId];
-      programmes.forEach(function(programme) {
-        var start = programme.startObj;
-        if (start < head) {
-          start = head;
-        }
-        var pos = Math.floor((start - head) / 60000);
-        programme.height = Math.floor((programme.stopObj - start) / 60000);
-        if (0 > pos || pos >= len) {
-          return;
-        }
-        timetableRows[pos].push(programme);
+    var tr = document.createElement('tr');
+    var minuteHeight = 3;
+    Object.keys(channels).forEach(function(channelId) {
+      var remoconNumber = channels[channelId].remoconNumber;
+      var td = document.createElement('td');
+      td.classList.add('remocon-number-' + remoconNumber);
+      td.classList.add('mdl-data-table__cell--non-numeric');
+      td.style.height = (minuteHeight * (tail-head) / 60000) + "px";
+
+      channels[channelId].programmes.forEach(function(programme) {
+        var start = (programme.startObj < head) ? head : programme.startObj;
+        var position = Math.floor((programme.startObj - head) / 60000);
+        var minutes = Math.floor((programme.stopObj - start) / 60000);
+        var div = document.createElement('div');
+        div.style.top = (minuteHeight * position) + "px";
+        div.style.minHeight = (minuteHeight * minutes) + "px";
+        div.style.width = "100%";
+        fillTd(div, programme);
+        td.appendChild(div);
       });
+      tr.appendChild(td);
     });
-    timetableRows.forEach(function(timetableRow) {
-      var tr = document.createElement('tr');
-      timetableRow.forEach(function(programme) {
-        var remoconNumber = programme.remocon_number;
-        var td = document.createElement('td');
-        td.classList.add('remocon-number-' + remoconNumber);
-        td.classList.add('mdl-data-table__cell--non-numeric');
-        fillTd(td, programme);
-        td.setAttribute('valign', 'top');
-        td.setAttribute('rowspan', programme.height);
-        tr.appendChild(td);
-      });
-      tbody.appendChild(tr);
-    });
+    tbody.appendChild(tr);
     return tbody;
   }
 

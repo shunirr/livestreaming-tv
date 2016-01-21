@@ -195,10 +195,12 @@
       td.appendChild(strong);
       var text = document.createTextNode(' ' + programme.title);
       td.appendChild(text);
+      if (programme.desc) {
       var desc = document.createElement('span');
-      desc.className = "description";
-      desc.innerHTML = programme.desc;
-      td.appendChild(desc);
+        desc.className = "description";
+        desc.innerHTML = programme.desc;
+        td.appendChild(desc);
+      }
     }
   }
 

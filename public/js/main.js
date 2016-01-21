@@ -205,7 +205,7 @@
   function generateTableBody(channels, head, tail) {
     var tbody = document.createElement('tbody');
     var tr = document.createElement('tr');
-    var minuteHeight = 3;
+    var minuteHeight = 10;
     Object.keys(channels).forEach(function(channelId) {
       var remoconNumber = channels[channelId].remoconNumber;
       var td = document.createElement('td');
@@ -220,7 +220,6 @@
         var div = document.createElement('div');
         div.style.top = (minuteHeight * position) + "px";
         div.style.minHeight = (minuteHeight * minutes) + "px";
-        div.style.width = "100%";
         fillTd(div, programme);
         td.appendChild(div);
       });
